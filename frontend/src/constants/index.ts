@@ -32,7 +32,27 @@ export const SORT_OPTIONS = [
 export const DEFAULT_PAGE_SIZE = 100
 
 /** 移动端检测正则 */
-export const MOBILE_REGEX = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
+export const MOBILE_REGEX = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i
+
+/** 平板设备检测正则 */
+export const TABLET_REGEX = /iPad|Android(?=.*Mobile)|Tablet|PlayBook|Kindle|Silk/i
+
+/** 响应式断点 */
+export const BREAKPOINTS = {
+  xs: 0,      // 超小屏手机
+  sm: 576,    // 小屏手机
+  md: 768,    // 平板
+  lg: 992,    // 小型桌面
+  xl: 1200,   // 大型桌面
+  xxl: 1600   // 超大桌面
+} as const
+
+/** 网格列数配置 */
+export const GRID_COLUMNS = {
+  mobile: { min: 2, max: 3 },
+  tablet: { min: 4, max: 5 },
+  desktop: { min: 4, max: 8 }
+} as const
 
 /** API 路径常量 */
 export const API_PATHS = {

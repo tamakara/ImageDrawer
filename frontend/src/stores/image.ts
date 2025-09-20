@@ -31,8 +31,8 @@ export const useImageStore = defineStore('image', {
         /**
          * 获取图片缩略图URL
          */
-        getImageThumbnailUrl: () => (hash: string): string => {
-            return `${THUMBNAIL_BASE_URL}/${hash}`
+        getImageThumbnailUrl: () => (hash: string, size: number = 300): string => {
+            return `${THUMBNAIL_BASE_URL}/${hash}?size=${size}`
         },
 
         /**

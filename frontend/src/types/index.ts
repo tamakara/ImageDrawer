@@ -8,6 +8,7 @@ export interface Image {
   height: number
   rating: string
   tags: string[]
+  uploadTime?: string // 添加上传时间字段
 }
 
 /** 分页信息 */

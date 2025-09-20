@@ -1,7 +1,7 @@
 <template>
   <teleport to="body">
     <div class="image-viewer-overlay" @click="onClose">
-      <div class="viewer-content" @click.stop>
+      <div class="viewer-content">
         <div class="image-area">
           <ImagePreview :url="imageStore.getImageUrl(image.hash)"/>
         </div>

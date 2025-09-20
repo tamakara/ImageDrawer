@@ -2,7 +2,6 @@
   <el-image
       :src="url"
       fit="contain"
-      preview-teleported
       class="image-preview"
       :preview-src-list="[url]"
       :z-index="1001"
