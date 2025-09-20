@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="$PROJECT_DIR$/frontend/src/stores/index.ts">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/frontend/src/stores/index.ts" />
+              <option name="updatedContent" value="// 统一导出所有Store&#10;export { useImageStore } from './image'&#10;&#10;// 可以在这里添加其他Store的导出&#10;// export { useUserStore } from './user'&#10;// export { useSettingsStore } from './settings'" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

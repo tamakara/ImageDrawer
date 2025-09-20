@@ -1,10 +1,28 @@
-import {defineConfig} from 'vite'
+import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
 
+// https://vitejs.dev/config/
 export default defineConfig({
-    plugins: [
-        vue(),
-        vueDevTools()
-    ],
+  plugins: [vue()],
+  resolve: {
+    alias: {
+      '@': '/src'
+    }
+  },
+  server: {
+    port: 3000,
+    open: true
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['vue', 'pinia'],
+          ui: ['element-plus']
+        }
+      }
+    }
+  }
 })
