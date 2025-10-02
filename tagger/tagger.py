@@ -107,6 +107,11 @@ def tagger():
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {file.filename} 处理完成，阈值 {thresh}, 耗时 {elapsed:.2f}s, 评级 {res['rating']}, 标签数 {len(res['tags'])}")
     return jsonify(res)
 
+
+@app.route('/', methods=['GET'])
+def health():
+    return "服务运行中"
+
 def get_input():
     while True:
         try:
