@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.imagedrawer</groupId>
+        <groupId>com.tamakara</groupId>
         <artifactId>imagedrawer</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
@@ -13,61 +13,43 @@
     <artifactId>frontend</artifactId>
     <packaging>pom</packaging>
 
-    <properties>
-        <node.version>v20.19.0</node.version>
-        <npm.version>10.2.0</npm.version>
-    </properties>
-
     <build>
         <plugins>
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
-                <version>1.15.1</version>
+                <version>1.15.0</version>
+                <configuration>
+                    <nodeVersion>v20.11.0</nodeVersion>
+                    <pnpmVersion>9.1.0</pnpmVersion>
+                </configuration>
                 <executions>
                     <execution>
-                        <id>install node and npm</id>
-                        <goals><goal>install-node-and-npm</goal></goals>
-                        <configuration>
-                            <nodeVersion>${node.version}</nodeVersion>
-                            <npmVersion>${npm.version}</npmVersion>
-                        </configuration>
+                        <id>install node and pnpm</id>
+                        <goals>
+                            <goal>install-node-and-pnpm</goal>
+                        </goals>
                     </execution>
                     <execution>
-                        <id>npm install</id>
-                        <goals><goal>npm</goal></goals>
+                        <id>pnpm install</id>
+                        <goals>
+                            <goal>pnpm</goal>
+                        </goals>
                         <configuration>
                             <arguments>install</arguments>
                         </configuration>
                     </execution>
                     <execution>
-                        <id>npm run build</id>
-                        <phase>generate-resources</phase>
-                        <goals><goal>npm</goal></goals>
+                        <id>pnpm build</id>
+                        <goals>
+                            <goal>pnpm</goal>
+                        </goals>
                         <configuration>
                             <arguments>run build</arguments>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-clean-plugin</artifactId>
-                <version>3.4.0</version>
-                <configuration>
-                    <filesets>
-                        <fileset>
-                            <directory>${project.basedir}</directory>
-                            <includes><include>dist/**</include></includes>
-                        </fileset>
-                        <fileset>
-                            <directory>${project.basedir}</directory>
-                            <includes><include>node/**</include></includes>
-                        </fileset>
-                    </filesets>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
-
 </project>

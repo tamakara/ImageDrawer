@@ -7,26 +7,33 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.3</version>
+        <version>3.5.9</version>
         <relativePath/>
     </parent>
-
-    <groupId>com.imagedrawer</groupId>
-    <artifactId>imagedrawer</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <name>ImageDrawer</name>
-    <packaging>pom</packaging>
 
     <modules>
         <module>frontend</module>
         <module>backend</module>
     </modules>
 
-    <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
+    <groupId>com.tamakara</groupId>
+    <artifactId>imagedrawer</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>ImageDrawer</name>
+    <packaging>pom</packaging>
+    <description>ImageDrawer</description>
 
-
+    <url/>
+    <licenses>
+        <license/>
+    </licenses>
+    <developers>
+        <developer/>
+    </developers>
+    <scm>
+        <connection/>
+        <developerConnection/>
+        <tag/>
+        <url/>
+    </scm>
 </project>
