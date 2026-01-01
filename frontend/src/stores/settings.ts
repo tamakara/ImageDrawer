@@ -9,7 +9,7 @@ export interface TaggerServer {
 }
 
 export const useSettingsStore = defineStore('settings', () => {
-  // Persist settings to localStorage
+  // 将设置持久化到 localStorage
   const taggerServers = useStorage<TaggerServer[]>('settings-tagger-servers', [])
   const uploadExtensions = useStorage<string[]>('settings-upload-extensions', ['jpg', 'jpeg', 'png', 'webp', 'gif'])
   const maxUploadSize = useStorage<number>('settings-max-upload-size', 50) // MB

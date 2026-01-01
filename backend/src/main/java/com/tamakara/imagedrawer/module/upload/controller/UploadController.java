@@ -1,0 +1,41 @@
+package com.tamakara.imagedrawer.module.upload.controller;
+
+import com.tamakara.imagedrawer.module.upload.model.UploadTask;
+import com.tamakara.imagedrawer.module.upload.service.UploadQueueService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/upload")
+@RequiredArgsConstructor
+@Tag(name = "上传", description = "图片上传操作")
+public class UploadController {
+
+    private final UploadQueueService uploadQueueService;
+
+    @PostMapping
+    @Operation(summary = "上传文件", description = "上传单个文件并开始处理")
+    public UploadTask uploadFile(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "taggerServerId", required = false) Long taggerServerId) {
+        return uploadQueueService.createTask(file, taggerServerId);
+    }
+
+    @GetMapping("/tasks")
+    @Operation(summary = "获取上传任务列表", description = "获取所有上传任务的状态")
+    public List<UploadTask> listTasks() {
+        return uploadQueueService.getAllTasks();
+    }
+
+    @GetMapping("/tasks/{id}")
+    @Operation(summary = "获取上传任务", description = "获取特定上传任务的状态")
+    public UploadTask getTask(@PathVariable String id) {
+        return uploadQueueService.getTask(id);
+    }
+}
+

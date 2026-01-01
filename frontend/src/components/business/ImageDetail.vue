@@ -1,0 +1,358 @@
+<script setup lang="ts">
+import {ref, computed, watch} from 'vue'
+import {
+  NModal,
+  NButton,
+  NIcon,
+  NInput,
+  NUpload,
+  NImage,
+  useMessage,
+  NPopconfirm,
+  NCheckbox,
+  NTag,
+  NDivider,
+  NTooltip
+} from 'naive-ui'
+import type {UploadCustomRequestOptions} from 'naive-ui'
+import {
+  CloseOutline,
+  InformationCircleOutline,
+  CloudUploadOutline,
+  TrashOutline,
+  DownloadOutline,
+  TimeOutline,
+  ResizeOutline,
+  DocumentTextOutline,
+  ImageOutline,
+  HardwareChipOutline,
+  PricetagOutline
+} from '@vicons/ionicons5'
+import {galleryApi, type ImageDto} from '../../api/gallery'
+import {useDateFormat} from '@vueuse/core'
+
+const props = defineProps<{
+  show: boolean
+  imageId: number | null
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:show', value: boolean): void
+  (e: 'refresh'): void
+}>()
+
+const message = useMessage()
+const showInfo = ref(true)
+const image = ref<ImageDto | null>(null)
+const loading = ref(false)
+const editingName = ref(false)
+const newName = ref('')
+
+const formattedSize = computed(() => {
+  if (!image.value) return ''
+  const size = image.value.size
+  if (size < 1024) return size + ' B'
+  if (size < 1024 * 1024) return (size / 1024).toFixed(2) + ' KB'
+  return (size / (1024 * 1024)).toFixed(2) + ' MB'
+})
+
+const fetchImage = async () => {
+  if (!props.imageId) return
+  loading.value = true
+  try {
+    image.value = await galleryApi.getImage(props.imageId)
+    newName.value = image.value.title
+  } catch (e) {
+    message.error('加载图片详情失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+watch(() => props.show, (val) => {
+  if (val && props.imageId) {
+    fetchImage()
+  } else {
+    image.value = null
+    showInfo.value = false
+  }
+})
+
+const handleClose = () => {
+  emit('update:show', false)
+}
+
+const toggleInfo = () => {
+  showInfo.value = !showInfo.value
+}
+
+const saveName = async () => {
+  if (!image.value || !newName.value || newName.value === image.value.title) {
+    editingName.value = false
+    return
+  }
+  try {
+    image.value = await galleryApi.updateImage(image.value.id, {title: newName.value})
+    message.success('名称已更新')
+    emit('refresh')
+  } catch (e) {
+    message.error('更新名称失败')
+  } finally {
+    editingName.value = false
+  }
+}
+
+const handleDelete = async () => {
+  if (!image.value) return
+  try {
+    await galleryApi.deleteImage(image.value.id)
+    message.success('图片已删除')
+    emit('refresh')
+    handleClose()
+  } catch (e) {
+    message.error('删除图片失败')
+  }
+}
+
+const handleDownload = () => {
+  if (!image.value) return
+  const link = document.createElement('a')
+  link.href = image.value.url
+  link.download = image.value.fileName || (image.value.title + '.' + image.value.extension)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
+const showReplaceModal = ref(false)
+const replaceUpdateName = ref(false)
+
+const handleReplace = async ({file, onFinish, onError}: UploadCustomRequestOptions) => {
+  if (!image.value) return
+  try {
+    image.value = await galleryApi.updateImageFile(image.value.id, file.file as File, replaceUpdateName.value)
+    message.success('文件已替换')
+    emit('refresh')
+    showReplaceModal.value = false
+    onFinish()
+  } catch (e) {
+    message.error('替换文件失败')
+    onError()
+  }
+}
+
+</script>
+
+<template>
+  <n-modal :show="show" @update:show="(v) => emit('update:show', v)" class="custom-modal" :auto-focus="false">
+    <div class="flex h-[90vh] w-[90vw] bg-black/90 rounded-lg overflow-hidden relative">
+
+      <!-- 主图片区域 -->
+      <div class="flex-1 flex items-center justify-center relative p-4 overflow-hidden">
+        <n-image
+            v-if="image"
+            :src="image.url"
+            :alt="image.title"
+            class="w-full h-full flex items-center justify-center"
+            :img-props="{ class: 'max-h-full max-w-full shadow-lg' }"
+        />
+
+        <!-- 工具栏 -->
+        <div class="absolute top-4 right-4 flex gap-2">
+          <n-button circle secondary type="primary" @click="toggleInfo">
+            <template #icon>
+              <n-icon :component="InformationCircleOutline"/>
+            </template>
+          </n-button>
+          <n-button circle secondary type="error" @click="handleClose">
+            <template #icon>
+              <n-icon :component="CloseOutline"/>
+            </template>
+          </n-button>
+        </div>
+      </div>
+
+      <!-- 信息面板 -->
+      <div v-if="showInfo && image"
+           class="w-[28rem] bg-gray-900/95 backdrop-blur-md text-white p-6 flex flex-col gap-6 border-l border-gray-700 overflow-y-auto transition-all duration-300">
+
+        <!-- 标题部分 -->
+        <div class="flex flex-col gap-2">
+          <div class="text-sm text-gray-400 uppercase font-bold tracking-wider">标题</div>
+          <div v-if="!editingName" @click="editingName = true"
+               class="text-2xl font-semibold cursor-pointer hover:text-primary-400 truncate transition-colors"
+               title="点击编辑">
+            {{ image.title }}
+          </div>
+          <n-input v-else v-model:value="newName" @blur="saveName" @keyup.enter="saveName" autofocus
+                   placeholder="输入名称" size="large"/>
+        </div>
+
+        <n-divider class="my-0 bg-gray-700"/>
+
+        <!-- 标签部分 -->
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center justify-between">
+            <div class="text-sm text-gray-400 uppercase font-bold tracking-wider flex items-center gap-1">
+              <n-icon :component="PricetagOutline"/>
+              标签
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <n-tag
+                v-for="tag in image.tags"
+                :key="tag.id"
+                size="medium"
+                round
+                :bordered="false"
+                :color="{ color: 'rgba(59, 130, 246, 0.15)', textColor: '#93c5fd' }"
+                class="hover:bg-blue-500/30 transition-colors cursor-default"
+            >
+              {{ tag.name }}
+            </n-tag>
+            <span v-if="!image.tags?.length" class="text-gray-500 text-sm italic py-1">暂无标签</span>
+          </div>
+        </div>
+
+        <n-divider class="my-0 bg-gray-700"/>
+
+        <!-- 详细信息 -->
+        <div class="flex flex-col gap-4">
+          <div class="text-sm text-gray-400 uppercase font-bold tracking-wider">详细信息</div>
+          <div class="grid grid-cols-2 gap-y-5 gap-x-4 text-base">
+            <!-- Size -->
+            <div class="flex flex-col gap-1">
+                 <span class="text-gray-500 text-sm flex items-center gap-1">
+                    <n-icon :component="ResizeOutline"/> 尺寸
+                 </span>
+              <span class="text-gray-200 font-mono">{{ image.width }} × {{ image.height }}</span>
+            </div>
+            <!-- File Size -->
+            <div class="flex flex-col gap-1">
+                 <span class="text-gray-500 text-sm flex items-center gap-1">
+                    <n-icon :component="HardwareChipOutline"/> 大小
+                 </span>
+              <span class="text-gray-200 font-mono">{{ formattedSize }}</span>
+            </div>
+            <!-- Format -->
+            <div class="flex flex-col gap-1">
+                 <span class="text-gray-500 text-sm flex items-center gap-1">
+                    <n-icon :component="ImageOutline"/> 格式
+                 </span>
+              <span class="text-gray-200 uppercase font-mono">{{ image.extension }}</span>
+            </div>
+            <!-- Date -->
+            <div class="flex flex-col gap-1">
+                 <span class="text-gray-500 text-sm flex items-center gap-1">
+                    <n-icon :component="TimeOutline"/> 创建时间
+                 </span>
+              <span class="text-gray-200 font-mono">{{ useDateFormat(image.createdAt, 'YYYY-MM-DD').value }}</span>
+            </div>
+          </div>
+
+          <!-- Full Filename & Hash -->
+          <div class="flex flex-col gap-3 mt-2">
+            <div class="flex flex-col gap-1">
+                <span class="text-gray-500 text-sm flex items-center gap-1">
+                   <n-icon :component="DocumentTextOutline"/> 文件名
+                </span>
+              <n-tooltip trigger="hover" placement="top">
+                <template #trigger>
+                  <span
+                      class="text-gray-300 text-sm truncate font-mono bg-gray-800/50 p-2 rounded border border-gray-700/50 select-all">{{
+                      image.fileName
+                    }}</span>
+                </template>
+                {{ image.fileName }}
+              </n-tooltip>
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <span class="text-gray-500 text-sm flex items-center gap-1">
+                   <span class="font-bold text-[10px]">#</span> 哈希
+                </span>
+              <n-tooltip trigger="hover" placement="top">
+                <template #trigger>
+                  <span
+                      class="text-gray-300 text-sm truncate font-mono bg-gray-800/50 p-2 rounded border border-gray-700/50 select-all">{{
+                      image.hash
+                    }}</span>
+                </template>
+                {{ image.hash }}
+              </n-tooltip>
+            </div>
+          </div>
+        </div>
+
+        <!-- 操作 -->
+        <div class="flex flex-col gap-3 mt-auto">
+          <n-button block secondary type="info" @click="handleDownload">
+            <template #icon>
+              <n-icon :component="DownloadOutline"/>
+            </template>
+            下载原图
+          </n-button>
+
+          <n-popconfirm @positive-click="showReplaceModal = true" :show-icon="false">
+            <template #trigger>
+              <n-button block secondary type="warning">
+                <template #icon>
+                  <n-icon :component="CloudUploadOutline"/>
+                </template>
+                替换文件
+              </n-button>
+            </template>
+            确定要替换文件吗？
+          </n-popconfirm>
+
+          <n-popconfirm @positive-click="handleDelete">
+            <template #trigger>
+              <n-button block secondary type="error">
+                <template #icon>
+                  <n-icon :component="TrashOutline"/>
+                </template>
+                删除图片
+              </n-button>
+            </template>
+            确定要删除这张图片吗？
+          </n-popconfirm>
+        </div>
+      </div>
+    </div>
+  </n-modal>
+
+  <!-- Replace File Modal -->
+  <n-modal v-model:show="showReplaceModal" preset="dialog" title="替换文件">
+    <div class="flex flex-col gap-4">
+      <p>上传新文件以替换当前文件。</p>
+      <n-checkbox v-model:checked="replaceUpdateName">
+        将图片名称更新为新文件名
+      </n-checkbox>
+      <n-upload
+          :custom-request="handleReplace"
+          :show-file-list="false"
+          accept="image/*"
+      >
+        <n-button block type="primary">选择文件</n-button>
+      </n-upload>
+    </div>
+  </n-modal>
+</template>
+
+<style scoped>
+/* Custom scrollbar for info panel */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 3px;
+}
+</style>
+
