@@ -27,6 +27,10 @@ const addServerMutation = useMutation({
   }
 })
 
+function handleAddServer() {
+  addServerMutation.mutate(newServer.value as any)
+}
+
 const deleteServerMutation = useMutation({
   mutationFn: taggerApi.deleteServer,
   onSuccess: () => {

@@ -5,7 +5,7 @@ import { searchApi } from '../../api/search'
 import { tagsApi } from '../../api/tags'
 import { computed, ref, watch } from 'vue'
 import { useIntersectionObserver } from '@vueuse/core'
-import { NSpin, NEmpty, NImage, NModal, NCard, NTag, NButton, NSpace, NSelect, NCollapse, NCollapseItem } from 'naive-ui'
+import { NSpin, NEmpty, NSelect, NCollapse, NCollapseItem } from 'naive-ui'
 import ImageDetail from '../../components/business/ImageDetail.vue'
 
 // 搜索状态
@@ -66,8 +66,9 @@ const loadMoreTrigger = ref<HTMLElement | null>(null)
 
 useIntersectionObserver(
   loadMoreTrigger,
-  ([{ isIntersecting }]) => {
-    if (isIntersecting && hasNextPage.value) {
+  (entries) => {
+    const entry = entries[0]
+    if (entry && entry.isIntersecting && hasNextPage.value) {
       fetchNextPage()
     }
   }
@@ -142,6 +143,7 @@ function openDetail(image: any) {
       >
         <img
           :src="image.thumbnailUrl || image.url"
+          :alt="image.title || 'image'"
           class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
         />

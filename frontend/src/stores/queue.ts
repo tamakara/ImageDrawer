@@ -47,7 +47,7 @@ export const useQueueStore = defineStore('queue', () => {
     const index = tasks.value.findIndex(t => t.id === id)
     if (index !== -1) {
       const task = tasks.value[index]
-      if (task.thumbnailUrl) {
+      if (task && task.thumbnailUrl) {
         URL.revokeObjectURL(task.thumbnailUrl)
       }
       tasks.value.splice(index, 1)

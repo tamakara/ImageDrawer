@@ -18,8 +18,5 @@ public interface ImageMapper {
             dto.setThumbnailUrl("/api/file/thumb/" + image.getHash());
         }
     }
-
-
-
 }
 

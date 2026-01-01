@@ -9,6 +9,7 @@ import java.io.File;
 @SpringBootApplication
 @EnableJpaAuditing
 public class ImageDrawerApplication {
+
     public static void main(String[] args) {
         new File("data/db").mkdirs();
         new File("data/images").mkdirs();
