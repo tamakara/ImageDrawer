@@ -85,5 +85,10 @@ public class SystemSettingService {
     public Map<String, String> getAllSettings() {
         return new HashMap<>(settingsCache);
     }
-}
 
+    @Transactional
+    public void resetSettings() {
+        systemSettingRepository.deleteAll();
+        init();
+    }
+}

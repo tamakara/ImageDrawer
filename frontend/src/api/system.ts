@@ -30,5 +30,9 @@ export const systemApi = {
 
   clearCache: async () => {
     await apiClient.post('/system/settings/clear-cache')
+  },
+
+  resetSystem: async () => {
+    await apiClient.delete('/system/backup/reset')
   }
 }

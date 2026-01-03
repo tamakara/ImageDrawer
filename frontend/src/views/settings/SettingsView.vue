@@ -130,6 +130,17 @@ const restoreMutation = useMutation({
   }
 })
 
+const resetSystemMutation = useMutation({
+  mutationFn: systemApi.resetSystem,
+  onSuccess: () => {
+    message.success('系统已重置，即将刷新页面。')
+    setTimeout(() => window.location.reload(), 1500)
+  },
+  onError: () => {
+    message.error('重置失败')
+  }
+})
+
 </script>
 
 <template>
@@ -180,6 +191,12 @@ const restoreMutation = useMutation({
         >
           <n-button type="warning">还原备份</n-button>
         </n-upload>
+        <n-popconfirm @positive-click="resetSystemMutation.mutate()">
+          <template #trigger>
+            <n-button type="error">删除所有数据</n-button>
+          </template>
+          确定要删除所有数据并重置系统吗？此操作不可恢复！
+        </n-popconfirm>
       </n-space>
     </n-card>
 

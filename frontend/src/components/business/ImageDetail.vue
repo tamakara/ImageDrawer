@@ -42,7 +42,7 @@ const emit = defineEmits<{
 }>()
 
 const message = useMessage()
-const showInfo = ref(true)
+const showInfo = ref(false)
 const image = ref<ImageDto | null>(null)
 const loading = ref(false)
 const editingName = ref(false)

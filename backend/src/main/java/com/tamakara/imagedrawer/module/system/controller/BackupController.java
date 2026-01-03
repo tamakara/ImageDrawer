@@ -40,5 +40,10 @@ public class BackupController {
     public void restoreBackup(@RequestParam("file") MultipartFile file) throws IOException {
         backupService.restoreBackup(file);
     }
-}
 
+    @DeleteMapping("/reset")
+    @Operation(summary = "重置系统", description = "删除所有数据并重置设置")
+    public void resetSystem() throws IOException {
+        backupService.resetSystem();
+    }
+}

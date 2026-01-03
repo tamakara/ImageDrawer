@@ -1,9 +1,15 @@
 package com.tamakara.imagedrawer.module.system.service;
 
+import com.tamakara.imagedrawer.module.gallery.entity.Image;
+import com.tamakara.imagedrawer.module.gallery.repository.ImageRepository;
+import com.tamakara.imagedrawer.module.search.entity.Tag;
+import com.tamakara.imagedrawer.module.search.repository.TagRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -13,15 +19,22 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BackupService {
+
+    private final ImageRepository imageRepository;
+    private final TagRepository tagRepository;
+    private final SystemSettingService systemSettingService;
 
     @Value("${app.storage.image-dir}")
     private String imageDir;
@@ -58,12 +71,19 @@ public class BackupService {
         return backupFile;
     }
 
-    public void restoreBackup(MultipartFile file) throws IOException {
-        // 警告：此操作很危险。它会覆盖数据。
-        // 在实际应用中，我们应该先停止数据库连接。
-        // 如果应用程序正在运行，SQLite 文件锁定可能会阻止覆盖。
-        // 目前，我们假设它有效，或者我们可能需要重启。
+    @Transactional
+    public void resetSystem() throws IOException {
+        imageRepository.deleteAll();
+        tagRepository.deleteAll();
+        systemSettingService.resetSettings();
 
+        File images = new File(imageDir);
+        if (images.exists()) {
+            FileUtils.cleanDirectory(images);
+        }
+    }
+
+    public void restoreBackup(MultipartFile file) throws IOException {
         // 解压到临时目录
         Path tempExtractDir = Paths.get(tempDir, "restore_" + System.currentTimeMillis());
         Files.createDirectories(tempExtractDir);
@@ -95,28 +115,99 @@ public class BackupService {
             }
         }
 
-        // 将文件移动到实际位置
-        // 1. 恢复数据库
+        // 恢复逻辑
         String dbPath = dbUrl.replace("jdbc:sqlite:", "");
         File dbFile = new File(dbPath);
         File restoredDb = new File(tempExtractDir.toFile(), "db/" + dbFile.getName());
-        if (restoredDb.exists()) {
-            // 关闭数据库连接？SQLite 可能会被锁定。
-            // 在运行的 Spring Boot 应用程序中，这很棘手。
-            // 我们可能需要依赖操作系统文件替换或重启。
-            // 目前，让我们尝试复制。
-            FileUtils.copyFile(restoredDb, dbFile);
-        }
 
-        // 2. 恢复图片
-        File imagesDir = new File(imageDir);
-        File restoredImages = new File(tempExtractDir.toFile(), "images");
-        if (restoredImages.exists()) {
-            FileUtils.copyDirectory(restoredImages, imagesDir);
+        if (restoredDb.exists()) {
+            try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + restoredDb.getAbsolutePath())) {
+                // 1. 恢复设置
+                restoreSettings(conn);
+
+                // 2. 恢复图片
+                restoreImages(conn, tempExtractDir.toFile());
+            } catch (SQLException e) {
+                log.error("Failed to read restored database", e);
+                throw new IOException("Failed to read restored database", e);
+            }
         }
 
         // 清理
         FileUtils.deleteDirectory(tempExtractDir.toFile());
+    }
+
+    private void restoreSettings(Connection conn) throws SQLException {
+        Map<String, String> settings = new HashMap<>();
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT setting_key, setting_value FROM system_settings")) {
+            while (rs.next()) {
+                settings.put(rs.getString("setting_key"), rs.getString("setting_value"));
+            }
+        }
+        if (!settings.isEmpty()) {
+            systemSettingService.updateSettings(settings);
+        }
+    }
+
+    private void restoreImages(Connection conn, File tempDir) throws SQLException, IOException {
+        String sql = "SELECT * FROM images";
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                String hash = rs.getString("hash");
+                if (imageRepository.findByHash(hash).isPresent()) {
+                    continue;
+                }
+
+                Image image = new Image();
+                image.setTitle(rs.getString("title"));
+                image.setFileName(rs.getString("file_name"));
+                image.setExtension(rs.getString("extension"));
+                image.setSize(rs.getLong("size"));
+                image.setWidth(rs.getInt("width"));
+                image.setHeight(rs.getInt("height"));
+                image.setHash(hash);
+
+                // 尝试解析时间，如果失败则使用当前时间
+                // SQLite 默认存储格式可能不同，这里简单处理，如果需要精确还原需根据实际格式解析
+                // image.setCreatedAt(LocalDateTime.parse(rs.getString("created_at")));
+
+                long oldId = rs.getLong("id");
+                Set<Tag> tags = getTagsForImage(conn, oldId);
+                image.setTags(tags);
+
+                imageRepository.save(image);
+
+                File sourceFile = new File(tempDir, "images/" + hash);
+                if (sourceFile.exists()) {
+                    File destFile = new File(imageDir, hash);
+                    FileUtils.copyFile(sourceFile, destFile);
+                }
+            }
+        }
+    }
+
+    private Set<Tag> getTagsForImage(Connection conn, long oldImageId) throws SQLException {
+        Set<Tag> tags = new HashSet<>();
+        String sql = "SELECT t.name FROM tags t JOIN image_tags it ON t.id = it.tag_id WHERE it.image_id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setLong(1, oldImageId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    String tagName = rs.getString("name");
+                    Tag tag = tagRepository.findByName(tagName)
+                            .orElseGet(() -> {
+                                Tag newTag = new Tag();
+                                newTag.setName(tagName);
+                                newTag.setType("通用");
+                                return tagRepository.save(newTag);
+                            });
+                    tags.add(tag);
+                }
+            }
+        }
+        return tags;
     }
 
     private void addToZip(File file, String fileName, ZipOutputStream zos) throws IOException {
