@@ -9,14 +9,18 @@ export interface SearchRequestDto {
   includedTags: string[]
   excludedTags: string[]
   anyTags: string[]
+  keyword?: string
 }
 
 export const searchApi = {
-  search: async (request: SearchRequestDto, page: number, size: number) => {
+  search: async (request: SearchRequestDto, page: number, size: number, sort?: string) => {
+    const params: any = { page, size }
+    if (sort) {
+      params.sort = sort
+    }
     const response = await apiClient.post<Page<ImageDto>>('/search', request, {
-      params: { page, size }
+      params
     })
     return response.data
   }
 }
-

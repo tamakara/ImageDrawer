@@ -77,6 +77,15 @@ public class SearchService {
                 query.distinct(true);
             }
 
+            // 关键字搜索 (Title or FileName)
+            if (request.getKeyword() != null && !request.getKeyword().trim().isEmpty()) {
+                String likePattern = "%" + request.getKeyword().trim().toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("title")), likePattern),
+                        cb.like(cb.lower(root.get("fileName")), likePattern)
+                ));
+            }
+
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 

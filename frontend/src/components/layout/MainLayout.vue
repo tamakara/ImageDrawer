@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { h, ref } from 'vue'
+import { h } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { NLayout, NLayoutSider, NLayoutContent, NMenu, NIcon } from 'naive-ui'
+import { NLayout, NLayoutHeader, NLayoutContent, NMenu, NIcon, NDropdown, NButton } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
 import {
   Image24Regular as GalleryIcon,
   ArrowUpload24Regular as UploadIcon,
-  Settings24Regular as SettingsIcon
+  Settings24Regular as SettingsIcon,
+  Navigation24Regular as MenuIcon
 } from '@vicons/fluent'
 
-const collapsed = ref(false)
 const route = useRoute()
 
 function renderIcon(icon: any) {
@@ -36,31 +36,31 @@ const menuOptions: MenuOption[] = [
 </script>
 
 <template>
-  <n-layout has-sider class="h-screen">
-    <n-layout-sider
-      bordered
-      collapse-mode="width"
-      :collapsed-width="64"
-      :width="240"
-      :collapsed="collapsed"
-      show-trigger
-      @collapse="collapsed = true"
-      @expand="collapsed = false"
-    >
-      <div class="p-4 flex items-center justify-center h-16">
-        <span v-if="!collapsed" class="text-xl font-bold truncate">ImageDrawer</span>
-        <span v-else class="text-xl font-bold">ID</span>
+  <n-layout class="h-screen">
+    <n-layout-header bordered class="h-16 flex items-center px-4 justify-between">
+      <div class="flex items-center shrink-0 mr-4">
+        <span class="text-xl font-bold">ImageDrawer</span>
       </div>
-      <n-menu
-        :collapsed="collapsed"
-        :collapsed-width="64"
-        :collapsed-icon-size="22"
-        :options="menuOptions"
-        :value="String(route.name)"
-      />
-    </n-layout-sider>
-    <n-layout-content class="bg-gray-50 dark:bg-gray-900">
-      <div class="p-6 h-full overflow-auto">
+      <div class="hidden sm:flex flex-1 min-w-0 justify-end">
+        <n-menu
+          mode="horizontal"
+          :options="menuOptions"
+          :value="String(route.name)"
+          responsive
+        />
+      </div>
+      <div class="sm:hidden">
+        <n-dropdown trigger="click" :options="menuOptions">
+          <n-button text style="font-size: 24px">
+            <n-icon>
+              <MenuIcon />
+            </n-icon>
+          </n-button>
+        </n-dropdown>
+      </div>
+    </n-layout-header>
+    <n-layout-content class="bg-gray-50 dark:bg-gray-900" style="height: calc(100vh - 64px)">
+      <div class="h-full overflow-auto p-2">
         <router-view />
       </div>
     </n-layout-content>

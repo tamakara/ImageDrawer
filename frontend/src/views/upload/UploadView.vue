@@ -80,7 +80,7 @@ function onFileChange(e: Event) {
 const { data: tasks } = useQuery({
   queryKey: ['uploadTasks'],
   queryFn: uploadApi.listTasks,
-  refetchInterval: 2000 // 每 2 秒轮询一次
+  refetchInterval: 1000 // 每秒轮询一次
 })
 
 const columns = [
@@ -106,10 +106,10 @@ import { computed, h } from 'vue'
 </script>
 
 <template>
-  <div class="p-4 h-full flex flex-col gap-4">
+  <div class="h-full flex flex-col gap-4">
     <n-card title="上传图片">
       <div class="flex flex-col gap-4">
-        <div class="flex items-center gap-4">
+        <div class="flex flex-wrap items-center gap-4">
           <div class="w-64">
             <n-select v-model:value="selectedTagger" :options="taggerOptions" placeholder="选择 Tagger (可选)" clearable />
           </div>
@@ -154,7 +154,6 @@ import { computed, h } from 'vue'
       <n-data-table
         :columns="columns"
         :data="tasks || []"
-        :pagination="{ pageSize: 10 }"
         class="h-full"
         flex-height
       />

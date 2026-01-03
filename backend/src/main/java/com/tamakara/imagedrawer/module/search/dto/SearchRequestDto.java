@@ -9,5 +9,5 @@ public class SearchRequestDto {
     private List<String> includedTags; // AND
     private List<String> excludedTags; // NOT
     private List<String> anyTags;      // OR (at least one of these)
+    private String keyword;            // Title or Filename
 }
-

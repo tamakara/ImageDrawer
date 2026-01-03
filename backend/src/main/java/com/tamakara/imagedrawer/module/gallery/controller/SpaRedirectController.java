@@ -1,4 +1,4 @@
-package com.tamakara.imagedrawer.config;
+package com.tamakara.imagedrawer.module.gallery.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;

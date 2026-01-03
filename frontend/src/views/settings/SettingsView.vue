@@ -40,8 +40,8 @@ const deleteServerMutation = useMutation({
 })
 
 const serverColumns = [
-  {title: '名称', key: 'name'},
-  {title: '地址', key: 'url'},
+  {title: '名称', key: 'name', ellipsis: { tooltip: true }},
+  {title: '地址', key: 'url', ellipsis: { tooltip: true }},
   {
     title: '操作',
     key: 'actions',
@@ -56,13 +56,13 @@ const serverColumns = [
 // --- 系统设置 ---
 const {data: settings} = useQuery({
   queryKey: ['settings'],
-  queryFn: systemApi.getSettings
+  queryFn: systemApi.getSettings,
 })
 
-const settingsForm = ref({
-  'upload.max-file-size': '52428800',
-  'upload.allowed-extensions': 'jpg,png,webp,gif,jpeg',
-  'thumbnail.quality': '80'
+const settingsForm = ref<Record<string, string>>({
+  'upload.max-file-size': '',
+  'upload.allowed-extensions': '',
+  'thumbnail.quality': ''
 })
 
 // 监听数据加载
@@ -72,7 +72,7 @@ watch(settings, (newVal) => {
   if (newVal) {
     settingsForm.value = {...settingsForm.value, ...newVal}
   }
-})
+}, { immediate: true })
 
 const updateSettingsMutation = useMutation({
   mutationFn: systemApi.updateSettings,
@@ -106,7 +106,7 @@ const restoreMutation = useMutation({
 </script>
 
 <template>
-  <div class="p-4 flex flex-col gap-4 overflow-y-auto h-full">
+  <div class="flex flex-col gap-4 h-full">
 
     <!-- Tagger Servers -->
     <n-card title="Tagger 服务器">
