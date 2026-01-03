@@ -37,5 +37,16 @@ public class UploadController {
     public UploadTask getTask(@PathVariable String id) {
         return uploadQueueService.getTask(id);
     }
-}
 
+    @DeleteMapping("/tasks/{id}")
+    @Operation(summary = "删除上传任务", description = "删除特定上传任务")
+    public void deleteTask(@PathVariable String id) {
+        uploadQueueService.deleteTask(id);
+    }
+
+    @DeleteMapping("/tasks")
+    @Operation(summary = "清空上传任务", description = "清空所有上传任务")
+    public void clearTasks() {
+        uploadQueueService.clearTasks();
+    }
+}

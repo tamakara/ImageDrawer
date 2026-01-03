@@ -3,7 +3,7 @@ import {ref, h} from 'vue'
 import {useQuery, useMutation, useQueryClient} from '@tanstack/vue-query'
 import {taggerApi, type TaggerServerConfig} from '../../api/tagger'
 import {systemApi} from '../../api/system'
-import {NCard, NButton, NInput, NForm, NFormItem, NDataTable, NSpace, NModal, useMessage, NUpload, NPopconfirm} from 'naive-ui'
+import {NCard, NButton, NInput, NForm, NFormItem, NDataTable, NSpace, NModal, useMessage, NUpload, NPopconfirm, NSelect} from 'naive-ui'
 
 const message = useMessage()
 const queryClient = useQueryClient()
@@ -62,15 +62,31 @@ const {data: settings} = useQuery({
 const settingsForm = ref<Record<string, string>>({
   'upload.max-file-size': '',
   'upload.allowed-extensions': '',
-  'thumbnail.quality': ''
+  'thumbnail.quality': '',
+  'thumbnail.max-size': '800'
 })
+
+const thumbnailSizeOptions = [
+  { label: '500x500', value: '500' },
+  { label: '800x800', value: '800' },
+  { label: '1000x1000', value: '1000' },
+  { label: '1500x1500', value: '1500' },
+  { label: '2000x2000', value: '2000' }
+]
 
 // 监听数据加载
 import {watch} from 'vue'
 
 watch(settings, (newVal) => {
   if (newVal) {
-    settingsForm.value = {...settingsForm.value, ...newVal}
+    const form = {...settingsForm.value, ...newVal}
+    if (form['upload.max-file-size']) {
+      const bytes = parseInt(form['upload.max-file-size'])
+      if (!isNaN(bytes)) {
+        form['upload.max-file-size'] = (bytes / (1024 * 1024)).toString()
+      }
+    }
+    settingsForm.value = form
   }
 }, { immediate: true })
 
@@ -81,6 +97,17 @@ const updateSettingsMutation = useMutation({
     message.success('设置已更新')
   }
 })
+
+function handleSaveSettings() {
+  const form = {...settingsForm.value}
+  if (form['upload.max-file-size']) {
+    const mb = parseFloat(form['upload.max-file-size'])
+    if (!isNaN(mb)) {
+      form['upload.max-file-size'] = Math.floor(mb * 1024 * 1024).toString()
+    }
+  }
+  updateSettingsMutation.mutate(form)
+}
 
 const clearCacheMutation = useMutation({
   mutationFn: systemApi.clearCache,
@@ -119,7 +146,7 @@ const restoreMutation = useMutation({
     <!-- System Settings -->
     <n-card title="系统设置">
       <n-form>
-        <n-form-item label="最大上传大小 (字节)">
+        <n-form-item label="最大上传大小 (MB)">
           <n-input v-model:value="settingsForm['upload.max-file-size']"/>
         </n-form-item>
         <n-form-item label="允许的扩展名 (逗号分隔)">
@@ -128,8 +155,11 @@ const restoreMutation = useMutation({
         <n-form-item label="缩略图质量 (1-100)">
           <n-input v-model:value="settingsForm['thumbnail.quality']" placeholder="80"/>
         </n-form-item>
+        <n-form-item label="缩略图最大分辨率">
+          <n-select v-model:value="settingsForm['thumbnail.max-size']" :options="thumbnailSizeOptions" />
+        </n-form-item>
         <n-space>
-          <n-button type="primary" @click="updateSettingsMutation.mutate(settingsForm)">保存设置</n-button>
+          <n-button type="primary" @click="handleSaveSettings">保存设置</n-button>
           <n-popconfirm @positive-click="clearCacheMutation.mutate()">
             <template #trigger>
               <n-button type="warning">清空缓存</n-button>

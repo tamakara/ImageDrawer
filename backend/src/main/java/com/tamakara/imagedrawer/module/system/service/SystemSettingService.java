@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +23,22 @@ public class SystemSettingService {
 
     @PostConstruct
     public void init() {
+        initDefaultSettings();
         refreshCache();
+    }
+
+    private void initDefaultSettings() {
+        Map<String, String> defaults = new HashMap<>();
+        defaults.put("upload.max-file-size", "5242880");
+        defaults.put("upload.allowed-extensions", "jpg,png,webp,gif,jpeg");
+        defaults.put("thumbnail.quality", "80");
+        defaults.put("thumbnail.max-size", "800");
+
+        for (Map.Entry<String, String> entry : defaults.entrySet()) {
+            if (!systemSettingRepository.existsById(entry.getKey())) {
+                systemSettingRepository.save(new SystemSetting(entry.getKey(), entry.getValue()));
+            }
+        }
     }
 
     public void refreshCache() {

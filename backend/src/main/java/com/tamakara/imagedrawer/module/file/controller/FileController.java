@@ -61,9 +61,9 @@ public class FileController {
     @Operation(summary = "获取缩略图")
     public ResponseEntity<Resource> getThumbnail(@PathVariable String hash) {
         try {
-            // TODO: 缩略图质量功能需要重新考虑
             int quality = systemSettingService.getIntSetting("thumbnail.quality", 80);
-            Path file = storageService.getThumbnailPath(hash, quality);
+            int maxSize = systemSettingService.getIntSetting("thumbnail.max-size", 800);
+            Path file = storageService.getThumbnailPath(hash, quality, maxSize);
             Resource resource = new UrlResource(file.toUri());
 
             if (resource.exists() || resource.isReadable()) {
@@ -71,15 +71,9 @@ public class FileController {
                         .contentType(MediaType.IMAGE_JPEG)
                         .body(resource);
             } else {
-                storageService.generateThumbnail(hash, quality);
-                resource = new UrlResource(file.toUri());
-                if (resource.exists() || resource.isReadable()) {
-                     return ResponseEntity.ok()
-                        .contentType(MediaType.IMAGE_JPEG)
-                        .body(resource);
-                }
                 return ResponseEntity.notFound().build();
             }
+
         } catch (MalformedURLException e) {
             return ResponseEntity.badRequest().build();
         }

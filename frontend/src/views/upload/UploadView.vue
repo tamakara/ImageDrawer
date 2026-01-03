@@ -1,25 +1,45 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { uploadApi, type UploadTask } from '../../api/upload'
-import { taggerApi } from '../../api/tagger'
-import { NCard, NButton, NSelect, NUpload, NUploadDragger, NIcon, NText, NP, NDataTable, NTag, useMessage, NCheckbox } from 'naive-ui'
-import { Archive24Regular as ArchiveIcon } from '@vicons/fluent'
+import {ref} from 'vue'
+import {useQuery, useMutation, useQueryClient} from '@tanstack/vue-query'
+import {uploadApi, type UploadTask} from '../../api/upload'
+import {taggerApi} from '../../api/tagger'
+import {
+  NCard,
+  NButton,
+  NSelect,
+  NUpload,
+  NUploadDragger,
+  NIcon,
+  NText,
+  NP,
+  NDataTable,
+  NTag,
+  useMessage,
+  NCheckbox,
+  type UploadCustomRequestOptions,
+  type UploadFileInfo
+} from 'naive-ui'
+import {
+  Archive24Regular as ArchiveIcon,
+  Dismiss24Regular as DismissIcon,
+  Delete24Regular as DeleteIcon
+} from '@vicons/fluent'
 
 const message = useMessage()
 const queryClient = useQueryClient()
 
 // Tagger 服务器
-const { data: taggerServers } = useQuery({
+const {data: taggerServers} = useQuery({
   queryKey: ['taggerServers'],
   queryFn: taggerApi.listServers
 })
 
 const selectedTagger = ref<number | null>(null)
 const recursiveScan = ref(true)
+const uploadFileList = ref<UploadFileInfo[]>([])
 
 const taggerOptions = computed(() =>
-  taggerServers.value?.map(s => ({ label: s.name, value: s.id })) || []
+    taggerServers.value?.map(s => ({label: s.name, value: s.id})) || []
 )
 
 // 上传逻辑
@@ -32,15 +52,22 @@ function triggerFolderUpload() {
 const uploadMutation = useMutation({
   mutationFn: (file: File) => uploadApi.uploadFile(file, selectedTagger.value || undefined),
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['uploadTasks'] })
+    queryClient.invalidateQueries({queryKey: ['uploadTasks']})
   },
   onError: (error) => {
     message.error('上传失败: ' + error.message)
   }
 })
 
-function uploadSingle(file: File) {
-  uploadMutation.mutate(file)
+const customRequest = ({ file }: UploadCustomRequestOptions) => {
+  if (file.file) {
+    uploadMutation.mutate(file.file)
+  }
+  // 上传后立即从列表中移除，防止重复上传
+  const index = uploadFileList.value.findIndex(f => f.id === file.id)
+  if (index > -1) {
+    uploadFileList.value.splice(index, 1)
+  }
 }
 
 async function handleFiles(files: FileList | null) {
@@ -77,15 +104,36 @@ function onFileChange(e: Event) {
 }
 
 // 任务队列
-const { data: tasks } = useQuery({
+const {data: tasks} = useQuery({
   queryKey: ['uploadTasks'],
   queryFn: uploadApi.listTasks,
   refetchInterval: 1000 // 每秒轮询一次
 })
 
+const deleteTaskMutation = useMutation({
+  mutationFn: (id: string) => uploadApi.deleteTask(id),
+  onSuccess: () => {
+    queryClient.invalidateQueries({queryKey: ['uploadTasks']})
+  },
+  onError: (error: any) => {
+    message.error('删除任务失败: ' + error.message)
+  }
+})
+
+const clearTasksMutation = useMutation({
+  mutationFn: () => uploadApi.clearTasks(),
+  onSuccess: () => {
+    queryClient.invalidateQueries({queryKey: ['uploadTasks']})
+    message.success('任务列表已清空')
+  },
+  onError: (error: any) => {
+    message.error('清空任务失败: ' + error.message)
+  }
+})
+
 const columns = [
-  { title: '文件名', key: 'filename' },
-  { title: '大小', key: 'size', render: (row: UploadTask) => (row.size / 1024 / 1024).toFixed(2) + ' MB' },
+  {title: '文件名', key: 'filename'},
+  {title: '大小', key: 'size', render: (row: UploadTask) => (row.size / 1024 / 1024).toFixed(2) + ' MB'},
   {
     title: '状态',
     key: 'status',
@@ -95,13 +143,27 @@ const columns = [
       if (row.status === 'FAILED') type = 'error'
       if (row.status === 'PROCESSING' || row.status === 'TAGGING') type = 'info'
 
-      return h(NTag, { type }, { default: () => row.status })
+      return h(NTag, {type}, {default: () => row.status})
     }
   },
-  { title: '消息', key: 'errorMessage' }
+  {title: '消息', key: 'errorMessage'},
+  {
+    title: '操作',
+    key: 'actions',
+    render: (row: UploadTask) => {
+      return h(NButton, {
+        size: 'small',
+        quaternary: true,
+        circle: true,
+        onClick: () => deleteTaskMutation.mutate(row.id)
+      }, {
+        icon: () => h(NIcon, null, {default: () => h(DismissIcon)})
+      })
+    }
+  }
 ]
 
-import { computed, h } from 'vue'
+import {computed, h} from 'vue'
 
 </script>
 
@@ -111,32 +173,34 @@ import { computed, h } from 'vue'
       <div class="flex flex-col gap-4">
         <div class="flex flex-wrap items-center gap-4">
           <div class="w-64">
-            <n-select v-model:value="selectedTagger" :options="taggerOptions" placeholder="选择 Tagger (可选)" clearable />
+            <n-select v-model:value="selectedTagger" :options="taggerOptions" placeholder="选择 Tagger (可选)"
+                      clearable/>
           </div>
           <n-checkbox v-model:checked="recursiveScan">递归扫描</n-checkbox>
           <n-button @click="triggerFolderUpload">
             上传文件夹
           </n-button>
           <input
-            type="file"
-            ref="fileInput"
-            webkitdirectory
-            directory
-            multiple
-            class="hidden"
-            @change="onFileChange"
+              type="file"
+              ref="fileInput"
+              webkitdirectory
+              directory
+              multiple
+              class="hidden"
+              @change="onFileChange"
           />
         </div>
 
         <n-upload
-          multiple
-          :show-file-list="false"
-          :custom-request="({ file }) => uploadSingle(file.file as File)"
+            v-model:file-list="uploadFileList"
+            multiple
+            :show-file-list="false"
+            :custom-request="customRequest"
         >
           <n-upload-dragger>
             <div style="margin-bottom: 12px">
               <n-icon size="48" :depth="3">
-                <archive-icon />
+                <archive-icon/>
               </n-icon>
             </div>
             <n-text style="font-size: 16px">
@@ -151,11 +215,20 @@ import { computed, h } from 'vue'
     </n-card>
 
     <n-card title="上传任务" class="flex-1 overflow-hidden flex flex-col">
+      <template #header-extra>
+        <n-button quaternary circle @click="clearTasksMutation.mutate()">
+          <template #icon>
+            <n-icon>
+              <delete-icon/>
+            </n-icon>
+          </template>
+        </n-button>
+      </template>
       <n-data-table
-        :columns="columns"
-        :data="tasks || []"
-        class="h-full"
-        flex-height
+          :columns="columns"
+          :data="tasks || []"
+          class="h-full"
+          flex-height
       />
     </n-card>
   </div>

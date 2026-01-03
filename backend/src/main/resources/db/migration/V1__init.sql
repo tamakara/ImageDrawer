@@ -51,11 +51,3 @@ CREATE TABLE system_settings
 CREATE INDEX idx_tags_name ON tags (name);
 CREATE INDEX idx_images_hash ON images (hash);
 CREATE INDEX idx_images_created_at ON images (created_at);
-
-
--- Insert default system settings
-INSERT INTO system_settings (setting_key, setting_value)
-VALUES ('upload.max-file-size', '5242800'),
-       ('upload.allowed-extensions', '.jpg,.png'),
-       ('thumbnail.quality', '80');
-

@@ -25,7 +25,6 @@ public class StorageService {
     @Value("${app.storage.temp-dir}")
     private String tempDir;
 
-
     @PostConstruct
     public void init() {
         try {
@@ -55,30 +54,24 @@ public class StorageService {
         }
     }
 
-    public Path getThumbnailPath(String hash, int quality) {
-        return Paths.get(tempDir).resolve(hash + "_" + quality + ".jpg");
-    }
-
-    public Path generateThumbnail(String hash, int quality) {
+    public Path getThumbnailPath(String hash, int quality, int maxSize) {
         try {
             Path source = Paths.get(imageDir).resolve(hash);
-            Path target = getThumbnailPath(hash, quality);
+            Path target = Paths.get(tempDir).resolve(hash + "_" + maxSize + "_" + quality + ".jpg");
 
             if (Files.exists(target)) {
                 return target;
             }
 
-            double q = quality / 100.0;
-
-           Thumbnails.of(source.toFile())
-                    .size(300, 300)
-                    .outputQuality(q)
+            Thumbnails.of(source.toFile())
+                    .size(maxSize, maxSize)
+                    .outputQuality(quality / 100.0)
                     .outputFormat("jpg")
                     .toFile(target.toFile());
 
             return target;
         } catch (IOException e) {
-             throw new RuntimeException("Failed to generate thumbnail", e);
+            throw new RuntimeException("Failed to generate thumbnail", e);
         }
     }
 
@@ -125,4 +118,3 @@ public class StorageService {
         }
     }
 }
-

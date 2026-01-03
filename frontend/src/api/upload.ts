@@ -33,6 +33,13 @@ export const uploadApi = {
   listTasks: async () => {
     const response = await apiClient.get<UploadTask[]>('/upload/tasks')
     return response.data
+  },
+
+  deleteTask: async (id: string) => {
+    await apiClient.delete(`/upload/tasks/${id}`)
+  },
+
+  clearTasks: async () => {
+    await apiClient.delete('/upload/tasks')
   }
 }
-

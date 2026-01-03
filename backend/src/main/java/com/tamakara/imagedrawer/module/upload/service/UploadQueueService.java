@@ -36,43 +36,50 @@ public class UploadQueueService {
     private final TagRepository tagRepository;
     private final SystemSettingService systemSettingService;
 
-    // In-memory queue storage
+    // 内存队列存储
     private final Map<String, UploadTask> taskMap = new ConcurrentHashMap<>();
 
     public UploadTask createTask(MultipartFile file, Long taggerServerId) {
-        // 1. Validate File
-        validateFile(file);
-
         String taskId = UUID.randomUUID().toString();
         UploadTask task = new UploadTask();
         task.setId(taskId);
         task.setFilename(file.getOriginalFilename());
         task.setSize(file.getSize());
-        task.setStatus(UploadTask.UploadStatus.PENDING);
         task.setCreatedAt(LocalDateTime.now());
         task.setUpdatedAt(LocalDateTime.now());
         task.setTaggerServerId(taggerServerId);
 
-        // Store file temporarily
-        String tempFilename = storageService.store(file);
-        task.setTempFilePath(tempFilename);
+        try {
+            // 1. 验证文件
+            validateFile(file);
 
-        taskMap.put(taskId, task);
+            task.setStatus(UploadTask.UploadStatus.PENDING);
 
-        // Start processing asynchronously
-        processTask(taskId);
+            // 临时存储文件
+            String tempFilename = storageService.store(file);
+            task.setTempFilePath(tempFilename);
+
+            taskMap.put(taskId, task);
+
+            // 异步开始处理
+            processTask(taskId);
+        } catch (Exception e) {
+            task.setStatus(UploadTask.UploadStatus.FAILED);
+            task.setErrorMessage(e.getMessage());
+            taskMap.put(taskId, task);
+        }
 
         return task;
     }
 
     private void validateFile(MultipartFile file) {
-        // Check size
+        // 检查大小
         long maxSize = systemSettingService.getLongSetting("upload.max-file-size", 52428800); // Default 50MB
         if (file.getSize() > maxSize) {
             throw new RuntimeException("File too large. Max size: " + maxSize);
         }
 
-        // Check extension
+        // 检查扩展名
         String allowedExtensions = systemSettingService.getSetting("upload.allowed-extensions", "jpg,png,webp,gif,jpeg");
         String filename = file.getOriginalFilename();
         if (filename != null) {
@@ -97,6 +104,14 @@ public class UploadQueueService {
         return taskMap.get(id);
     }
 
+    public void deleteTask(String id) {
+        taskMap.remove(id);
+    }
+
+    public void clearTasks() {
+        taskMap.clear();
+    }
+
     @Async
     public void processTask(String taskId) {
         UploadTask task = taskMap.get(taskId);
@@ -115,6 +130,8 @@ public class UploadQueueService {
                 // 文件已按哈希存储，因此我们不需要删除它（它是同一个文件）
                 // 但我们可能希望上传失败或仅返回现有图像。
                 // 当前逻辑失败。
+                // 如果想要不同的行为，可以在这里调整。
+                // TODO: 可以控制是否允许重复上传
                 task.setErrorMessage("Duplicate image found: " + existingImage.get().getId());
                 updateStatus(task, UploadTask.UploadStatus.FAILED);
                 return;
