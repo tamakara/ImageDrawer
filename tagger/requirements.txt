@@ -1,0 +1,10 @@
+numpy
+onnxruntime
+huggingface_hub
+requests
+torchvision
+pillow
+uvicorn
+fastapi
+pydantic
+hf_xet

@@ -24,7 +24,7 @@ import {
 import ImageDetail from '../../components/business/ImageDetail.vue'
 import {Search24Regular, Dismiss24Regular} from '@vicons/fluent'
 
-// Form State
+// 表单状态
 const formState = reactive({
   keyword: '',
   includedTags: [] as string[],
@@ -34,12 +34,12 @@ const formState = reactive({
   sortDirection: 'DESC'
 })
 
-// Active Search State (applied on search click)
+// 激活的搜索状态（点击搜索时应用）
 const activeSearchState = ref({...formState})
 const page = ref(1)
 const pageSize = ref(20)
 
-// Tag Autocomplete
+// 标签自动补全
 const tagQuery = ref('')
 const {data: availableTags} = useQuery({
   queryKey: ['tags', tagQuery],
@@ -52,7 +52,7 @@ function handleTagSearch(query: string) {
   tagQuery.value = query
 }
 
-// Search Action
+// 搜索操作
 function handleSearch() {
   page.value = 1
   activeSearchState.value = {...formState}
@@ -68,7 +68,7 @@ function handleReset() {
   handleSearch()
 }
 
-// Query
+// 查询
 const {
   data,
   isLoading,
@@ -89,7 +89,7 @@ const {
 const images = computed(() => data.value?.content || [])
 const totalCount = computed(() => data.value?.totalElements || 0)
 
-// Detail Modal
+// 详情弹窗
 const showDetail = ref(false)
 const selectedImage = ref<any>(null)
 

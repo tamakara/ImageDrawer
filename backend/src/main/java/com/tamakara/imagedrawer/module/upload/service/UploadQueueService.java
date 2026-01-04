@@ -11,7 +11,6 @@ import com.tamakara.imagedrawer.module.tagger.service.TaggerService;
 import com.tamakara.imagedrawer.module.upload.model.UploadTask;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -129,8 +128,6 @@ public class UploadQueueService {
             if (existingImage.isPresent()) {
                 // 文件已按哈希存储，因此我们不需要删除它（它是同一个文件）
                 // 但我们可能希望上传失败或仅返回现有图像。
-                // 当前逻辑失败。
-                // 如果想要不同的行为，可以在这里调整。
                 // TODO: 可以控制是否允许重复上传
                 task.setErrorMessage("Duplicate image found: " + existingImage.get().getId());
                 updateStatus(task, UploadTask.UploadStatus.FAILED);
@@ -143,26 +140,12 @@ public class UploadQueueService {
             if (task.getTaggerServerId() != null) {
                 updateStatus(task, UploadTask.UploadStatus.TAGGING);
                 try {
-                    Path tagImageFile = filePath;
-                    boolean isTemp = false;
-
-                    // 如果需要，调整大小（例如 > 2MB）
-                    // TODO: 这个阈值可以配置
-                    if (Files.size(filePath) > 2 * 1024 * 1024) {
-                        Path tempThumb = storageService.createTempFile("thumb_", ".jpg");
-                        Thumbnails.of(filePath.toFile())
-                                .size(1024, 1024)
-                                .outputFormat("jpg")
-                                .toFile(tempThumb.toFile());
-                        tagImageFile = tempThumb;
-                        isTemp = true;
-                    }
-
-                    List<TaggerResponseDto.TaggerTag> taggerTags = taggerService.tagImage(task.getTaggerServerId(), tagImageFile);
-
-                    if (isTemp) {
-                        Files.deleteIfExists(tagImageFile);
-                    }
+                    // 生成适合打标签的缩略图
+                    //TODO: 这里的尺寸可以配置
+                    Path tagImageFile = storageService.getThumbnailPath(hash, 100, 1000);
+                    List<TaggerResponseDto.TaggerTag> taggerTags
+                            = taggerService.tagImage(task.getTaggerServerId(), tagImageFile);
+                    Files.deleteIfExists(tagImageFile);
 
                     // 将 TaggerTags 转换为实体
                     for (TaggerResponseDto.TaggerTag tt : taggerTags) {
