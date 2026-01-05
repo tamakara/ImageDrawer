@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { TagDto } from './gallery'
+import type {TagDto} from './gallery'
 
 const apiClient = axios.create({
   baseURL: '/api',
@@ -8,9 +8,8 @@ const apiClient = axios.create({
 export const tagsApi = {
   listTags: async (query?: string) => {
     const response = await apiClient.get<TagDto[]>('/tags', {
-      params: { query }
+      params: {query}
     })
     return response.data
   }
 }
-

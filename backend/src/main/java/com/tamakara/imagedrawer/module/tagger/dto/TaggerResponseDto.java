@@ -8,7 +8,6 @@ import java.util.Map;
 @Data
 public class TaggerResponseDto {
     private boolean success;
-    //    private TagData data;
     private Map<String, List<String>> data;
     private String error;
 }

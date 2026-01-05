@@ -10,13 +10,7 @@ class TaggerRequest(BaseModel):
     category_thresholds: dict[str, float] = Field(default_factory=dict)
 
 
-class TagData(BaseModel):
-    artist: List[str] = Field(default_factory=list)
-    character: List[str] = Field(default_factory=list)
-    copyright: List[str] = Field(default_factory=list)
-    general: List[str] = Field(default_factory=list)
-    meta: List[str] = Field(default_factory=list)
-    rating: List[str] = Field(default_factory=list)
+type TagData = Dict[str, List[str]]
 
 
 class TaggerResponse(BaseModel):

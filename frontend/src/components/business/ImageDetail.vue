@@ -28,7 +28,7 @@ import {
   HardwareChipOutline,
   PricetagOutline
 } from '@vicons/ionicons5'
-import {galleryApi, type ImageDto} from '../../api/gallery'
+import {galleryApi, type ImageDto, type TagDto} from '../../api/gallery'
 import {useDateFormat} from '@vueuse/core'
 
 const props = defineProps<{
@@ -141,6 +141,48 @@ const handleReplace = async ({file, onFinish, onError}: UploadCustomRequestOptio
   }
 }
 
+const tagTypeOrder = ['copyright', 'character', 'artist', 'general', 'meta', 'rating']
+
+const tagTypeMap: Record<string, string> = {
+  copyright: '版权',
+  character: '角色',
+  artist: '作者',
+  general: '一般',
+  meta: '元数据',
+  rating: '分级'
+}
+
+const groupedTags = computed(() => {
+  if (!image.value || !image.value.tags) return {}
+
+  const groups: Record<string, TagDto[]> = {}
+  tagTypeOrder.forEach(t => groups[t] = [])
+
+  image.value.tags.forEach(tag => {
+    const type = tag.type || 'general'
+    if (groups[type]) {
+      groups[type].push(tag)
+    } else {
+      if (!groups['general']) groups['general'] = []
+      groups['general'].push(tag)
+    }
+  })
+
+  return groups
+})
+
+const getTagColor = (type: string) => {
+  switch (type) {
+    case 'copyright': return { color: 'rgba(213, 0, 249, 0.15)', textColor: '#e040fb' }
+    case 'character': return { color: 'rgba(0, 200, 83, 0.15)', textColor: '#69f0ae' }
+    case 'artist': return { color: 'rgba(255, 23, 68, 0.15)', textColor: '#ff5252' }
+    case 'meta': return { color: 'rgba(255, 145, 0, 0.15)', textColor: '#ffab40' }
+    case 'rating': return { color: 'rgba(158, 158, 158, 0.15)', textColor: '#bdbdbd' }
+    case 'general':
+    default: return { color: 'rgba(59, 130, 246, 0.15)', textColor: '#93c5fd' }
+  }
+}
+
 </script>
 
 <template>
@@ -199,20 +241,27 @@ const handleReplace = async ({file, onFinish, onError}: UploadCustomRequestOptio
             </div>
           </div>
 
-          <div class="flex flex-wrap gap-2">
-            <n-tag
-                v-for="tag in image.tags"
-                :key="tag.id"
-                size="medium"
-                round
-                :bordered="false"
-                :color="{ color: 'rgba(59, 130, 246, 0.15)', textColor: '#93c5fd' }"
-                class="hover:bg-blue-500/30 transition-colors cursor-default"
-            >
-              {{ tag.name }}
-            </n-tag>
-            <span v-if="!image.tags?.length" class="text-gray-500 text-sm italic py-1">暂无标签</span>
+          <div v-if="image.tags?.length" class="flex flex-col gap-3">
+            <template v-for="type in tagTypeOrder" :key="type">
+              <div v-if="groupedTags[type]?.length" class="flex flex-col gap-1">
+                <div class="text-xs text-gray-500 uppercase font-semibold tracking-wider ml-1">{{ tagTypeMap[type] || type }}</div>
+                <div class="flex flex-wrap gap-2">
+                  <n-tag
+                      v-for="tag in groupedTags[type]"
+                      :key="tag.id"
+                      size="medium"
+                      round
+                      :bordered="false"
+                      :color="getTagColor(type)"
+                      class="hover:opacity-80 transition-opacity cursor-default"
+                  >
+                    {{ tag.name }}
+                  </n-tag>
+                </div>
+              </div>
+            </template>
           </div>
+          <span v-else class="text-gray-500 text-sm italic py-1">暂无标签</span>
         </div>
 
         <n-divider class="my-0 bg-gray-700"/>

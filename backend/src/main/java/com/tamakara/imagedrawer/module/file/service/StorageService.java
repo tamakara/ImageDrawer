@@ -18,13 +18,13 @@ import java.util.stream.Stream;
 
 @Service
 public class StorageService {
-
     @Value("${app.storage.image-dir}")
     private String imageDir;
 
     @Value("${app.storage.temp-dir}")
     private String tempDir;
- @Value("${app.storage.thumbnail-dir}")
+
+    @Value("${app.storage.thumbnail-dir}")
     private String thumbnailDir;
 
     @PostConstruct
@@ -32,6 +32,7 @@ public class StorageService {
         try {
             Files.createDirectories(Paths.get(imageDir));
             Files.createDirectories(Paths.get(tempDir));
+            Files.createDirectories(Paths.get(thumbnailDir));
         } catch (IOException e) {
             throw new RuntimeException("Could not initialize storage", e);
         }

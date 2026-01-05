@@ -1,6 +1,6 @@
 import sys
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Body
+from fastapi import FastAPI
 
 from app.config import IMAGE_DIR
 from app.dto import TagData, TaggerResponse, TaggerRequest
@@ -70,13 +70,17 @@ async def tag_image(request: TaggerRequest) -> TaggerResponse:
 
         tags_by_category = result.get('tags', {})
 
-        data = TagData()
-        data.artist = [pair[0] for pair in tags_by_category['artist']]
-        data.character = [pair[0] for pair in tags_by_category['character']]
-        data.copyright = [pair[0] for pair in tags_by_category['copyright']]
-        data.general = [pair[0] for pair in tags_by_category['general']]
-        data.meta = [pair[0] for pair in tags_by_category['meta']]
-        data.rating = [tags_by_category['rating'][0][0]]
+        data: TagData = {
+            'artist': [],
+            'character': [],
+            'copyright': [],
+            'general': [],
+            'meta': [],
+            'rating': [],
+        }
+
+        for category in data.keys():
+            data[category] = [pair[0] for pair in tags_by_category[category]]
 
         return TaggerResponse.ok(data)
     except Exception as e:

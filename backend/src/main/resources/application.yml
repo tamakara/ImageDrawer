@@ -3,7 +3,7 @@ spring:
     name: imagedrawer
 
   datasource:
-    url: jdbc:sqlite:data/db/data.sqlite
+    url: jdbc:sqlite:${app.storage.db-dir}/data.sqlite
     driver-class-name: org.sqlite.JDBC
     username: ""
     password: ""
@@ -24,6 +24,7 @@ spring:
 
 app:
   storage:
+    db-dir: data/db
     image-dir: data/image
     temp-dir: data/temp
     thumbnail-dir: data/temp/thumbnail
