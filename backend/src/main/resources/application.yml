@@ -24,5 +24,8 @@ spring:
 
 app:
   storage:
-    image-dir: data/images
+    image-dir: data/image
     temp-dir: data/temp
+    thumbnail-dir: data/temp/thumbnail
+  tagger:
+    url: http://localhost:8000/tag

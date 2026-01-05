@@ -28,19 +28,9 @@ import {
 const message = useMessage()
 const queryClient = useQueryClient()
 
-// Tagger 服务器
-const {data: taggerServers} = useQuery({
-  queryKey: ['taggerServers'],
-  queryFn: taggerApi.listServers
-})
-
-const selectedTagger = ref<number | null>(null)
+const enableTagging = ref(true)
 const recursiveScan = ref(true)
 const uploadFileList = ref<UploadFileInfo[]>([])
-
-const taggerOptions = computed(() =>
-    taggerServers.value?.map(s => ({label: s.name, value: s.id})) || []
-)
 
 // 上传逻辑
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -50,7 +40,7 @@ function triggerFolderUpload() {
 }
 
 const uploadMutation = useMutation({
-  mutationFn: (file: File) => uploadApi.uploadFile(file, selectedTagger.value || undefined),
+  mutationFn: (file: File) => uploadApi.uploadFile(file, enableTagging.value),
   onSuccess: () => {
     queryClient.invalidateQueries({queryKey: ['uploadTasks']})
   },
@@ -172,10 +162,7 @@ import {computed, h} from 'vue'
     <n-card title="上传图片">
       <div class="flex flex-col gap-4">
         <div class="flex flex-wrap items-center gap-4">
-          <div class="w-64">
-            <n-select v-model:value="selectedTagger" :options="taggerOptions" placeholder="选择 Tagger (可选)"
-                      clearable/>
-          </div>
+          <n-checkbox v-model:checked="enableTagging">自动打标</n-checkbox>
           <n-checkbox v-model:checked="recursiveScan">递归扫描</n-checkbox>
           <n-button @click="triggerFolderUpload">
             上传文件夹

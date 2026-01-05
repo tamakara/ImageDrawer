@@ -1,57 +1,11 @@
 <script setup lang="ts">
-import {ref, h} from 'vue'
+import {ref, watch} from 'vue'
 import {useQuery, useMutation, useQueryClient} from '@tanstack/vue-query'
-import {taggerApi, type TaggerServerConfig} from '../../api/tagger'
 import {systemApi} from '../../api/system'
-import {NCard, NButton, NInput, NForm, NFormItem, NDataTable, NSpace, NModal, useMessage, NUpload, NPopconfirm, NSelect} from 'naive-ui'
+import {NCard, NButton, NInput, NForm, NFormItem, NSpace, useMessage, NUpload, NPopconfirm, NSelect, NDivider} from 'naive-ui'
 
 const message = useMessage()
 const queryClient = useQueryClient()
-
-// --- Tagger 服务器 ---
-const {data: servers} = useQuery({
-  queryKey: ['taggerServers'],
-  queryFn: taggerApi.listServers
-})
-
-const showAddServer = ref(false)
-const newServer = ref<Omit<TaggerServerConfig, 'id'>>({name: '', url: '', active: true})
-
-const addServerMutation = useMutation({
-  mutationFn: taggerApi.addServer,
-  onSuccess: () => {
-    queryClient.invalidateQueries({queryKey: ['taggerServers']})
-    showAddServer.value = false
-    newServer.value = {name: '', url: '', active: true}
-    message.success('服务器已添加')
-  }
-})
-
-function handleAddServer() {
-  addServerMutation.mutate(newServer.value as any)
-}
-
-const deleteServerMutation = useMutation({
-  mutationFn: taggerApi.deleteServer,
-  onSuccess: () => {
-    queryClient.invalidateQueries({queryKey: ['taggerServers']})
-    message.success('服务器已删除')
-  }
-})
-
-const serverColumns = [
-  {title: '名称', key: 'name', ellipsis: { tooltip: true }},
-  {title: '地址', key: 'url', ellipsis: { tooltip: true }},
-  {
-    title: '操作',
-    key: 'actions',
-    render: (row: TaggerServerConfig) => h(NButton, {
-      type: 'error',
-      size: 'small',
-      onClick: () => deleteServerMutation.mutate(row.id)
-    }, {default: () => '删除'})
-  }
-]
 
 // --- 系统设置 ---
 const {data: settings} = useQuery({
@@ -63,7 +17,15 @@ const settingsForm = ref<Record<string, string>>({
   'upload.max-file-size': '',
   'upload.allowed-extensions': '',
   'thumbnail.quality': '',
-  'thumbnail.max-size': '800'
+  'thumbnail.max-size': '800',
+  'tagger.threshold': '0.6',
+  'tagger.minConfidence': '0.1',
+  'tagger.category_thresholds.artist': '',
+  'tagger.category_thresholds.character': '',
+  'tagger.category_thresholds.copyright': '',
+  'tagger.category_thresholds.general': '',
+  'tagger.category_thresholds.meta': '',
+  'tagger.category_thresholds.rating': ''
 })
 
 const thumbnailSizeOptions = [
@@ -73,9 +35,6 @@ const thumbnailSizeOptions = [
   { label: '1500x1500', value: '1500' },
   { label: '2000x2000', value: '2000' }
 ]
-
-// 监听数据加载
-import {watch} from 'vue'
 
 watch(settings, (newVal) => {
   if (newVal) {
@@ -146,14 +105,6 @@ const resetSystemMutation = useMutation({
 <template>
   <div class="flex flex-col gap-4 h-full">
 
-    <!-- Tagger Servers -->
-    <n-card title="Tagger 服务器">
-      <template #header-extra>
-        <n-button type="primary" @click="showAddServer = true">添加服务器</n-button>
-      </template>
-      <n-data-table :columns="serverColumns" :data="servers || []"/>
-    </n-card>
-
     <!-- System Settings -->
     <n-card title="系统设置">
       <n-form>
@@ -169,6 +120,39 @@ const resetSystemMutation = useMutation({
         <n-form-item label="缩略图最大分辨率">
           <n-select v-model:value="settingsForm['thumbnail.max-size']" :options="thumbnailSizeOptions" />
         </n-form-item>
+
+        <n-divider title-placement="left">Tagger 设置</n-divider>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <n-form-item label="阈值 (Threshold)">
+            <n-input v-model:value="settingsForm['tagger.threshold']" placeholder="0.6"/>
+          </n-form-item>
+          <n-form-item label="最小置信度 (Min Confidence)">
+            <n-input v-model:value="settingsForm['tagger.minConfidence']" placeholder="0.1"/>
+          </n-form-item>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <n-form-item label="Artist Threshold">
+            <n-input v-model:value="settingsForm['tagger.category_thresholds.artist']" placeholder="Default"/>
+          </n-form-item>
+          <n-form-item label="Character Threshold">
+            <n-input v-model:value="settingsForm['tagger.category_thresholds.character']" placeholder="Default"/>
+          </n-form-item>
+          <n-form-item label="Copyright Threshold">
+            <n-input v-model:value="settingsForm['tagger.category_thresholds.copyright']" placeholder="Default"/>
+          </n-form-item>
+          <n-form-item label="General Threshold">
+            <n-input v-model:value="settingsForm['tagger.category_thresholds.general']" placeholder="Default"/>
+          </n-form-item>
+          <n-form-item label="Meta Threshold">
+            <n-input v-model:value="settingsForm['tagger.category_thresholds.meta']" placeholder="Default"/>
+          </n-form-item>
+          <n-form-item label="Rating Threshold">
+            <n-input v-model:value="settingsForm['tagger.category_thresholds.rating']" placeholder="Default"/>
+          </n-form-item>
+        </div>
+
         <n-space>
           <n-button type="primary" @click="handleSaveSettings">保存设置</n-button>
           <n-popconfirm @positive-click="clearCacheMutation.mutate()">
@@ -200,21 +184,6 @@ const resetSystemMutation = useMutation({
       </n-space>
     </n-card>
 
-    <!-- Add Server Modal -->
-    <n-modal v-model:show="showAddServer" preset="dialog" title="添加 Tagger 服务器">
-      <n-form class="mt-4">
-        <n-form-item label="名称">
-          <n-input v-model:value="newServer.name"/>
-        </n-form-item>
-        <n-form-item label="地址">
-          <n-input v-model:value="newServer.url" placeholder="http://localhost:5000/tag"/>
-        </n-form-item>
-      </n-form>
-      <template #action>
-        <n-button @click="showAddServer = false">取消</n-button>
-        <n-button type="primary" @click="handleAddServer">添加</n-button>
-      </template>
-    </n-modal>
 
   </div>
 </template>

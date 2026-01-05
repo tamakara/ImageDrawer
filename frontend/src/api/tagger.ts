@@ -4,26 +4,21 @@ const apiClient = axios.create({
   baseURL: '/api',
 })
 
-export interface TaggerServerConfig {
-  id: number
-  name: string
-  url: string
-  active: boolean
+export interface TaggerSettings {
+  id?: number
+  threshold: number
+  minConfidence: number
 }
 
 export const taggerApi = {
-  listServers: async () => {
-    const response = await apiClient.get<TaggerServerConfig[]>('/tagger/servers')
+  getSettings: async () => {
+    const response = await apiClient.get<TaggerSettings>('/tagger/settings')
     return response.data
   },
 
-  addServer: async (config: Omit<TaggerServerConfig, 'id'>) => {
-    const response = await apiClient.post<TaggerServerConfig>('/tagger/servers', config)
+  updateSettings: async (settings: TaggerSettings) => {
+    const response = await apiClient.post<TaggerSettings>('/tagger/settings', settings)
     return response.data
-  },
-
-  deleteServer: async (id: number) => {
-    await apiClient.delete(`/tagger/servers/${id}`)
   }
 }
 

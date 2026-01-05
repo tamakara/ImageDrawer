@@ -15,12 +15,10 @@ export interface UploadTask {
 }
 
 export const uploadApi = {
-  uploadFile: async (file: File, taggerServerId?: number) => {
+  uploadFile: async (file: File, enableTagging: boolean = true) => {
     const formData = new FormData()
     formData.append('file', file)
-    if (taggerServerId) {
-      formData.append('taggerServerId', taggerServerId.toString())
-    }
+    formData.append('enableTagging', enableTagging.toString())
 
     const response = await apiClient.post<UploadTask>('/upload', formData, {
       headers: {

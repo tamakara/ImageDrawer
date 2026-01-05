@@ -9,20 +9,19 @@ ONNX_MODEL_FILE = "camie-tagger-v2.onnx"
 METADATA_FILE = "camie-tagger-v2-metadata.json"
 
 
+from app.config import MODEL_DIR
+
+
 def get_model_files():
     """从 HF Hub 下载模型文件并返回路径"""
     try:
-        # 使用当前目录下的 /cache/model 目录
-        cache_dir = os.path.join(os.getcwd(), "/cache/model")
-        os.makedirs(cache_dir, exist_ok=True)
-
         # 1. 获取元数据
         try:
             print("正在检查本地元数据...")
             metadata_path = hf_hub_download(
                 repo_id=MODEL_REPO,
                 filename=METADATA_FILE,
-                cache_dir=cache_dir,
+                cache_dir=MODEL_DIR,
                 local_files_only=True
             )
             print("找到本地元数据。")
@@ -31,7 +30,7 @@ def get_model_files():
             metadata_path = hf_hub_download(
                 repo_id=MODEL_REPO,
                 filename=METADATA_FILE,
-                cache_dir=cache_dir
+                cache_dir=MODEL_DIR
             )
 
         # 2. 获取 ONNX 模型
@@ -40,7 +39,7 @@ def get_model_files():
             onnx_path = hf_hub_download(
                 repo_id=MODEL_REPO,
                 filename=ONNX_MODEL_FILE,
-                cache_dir=cache_dir,
+                cache_dir=MODEL_DIR,
                 local_files_only=True
             )
             print("找到本地 ONNX 模型。")
@@ -51,14 +50,14 @@ def get_model_files():
                 onnx_path = hf_hub_download(
                     repo_id=MODEL_REPO,
                     filename=ONNX_MODEL_FILE,
-                    cache_dir=cache_dir,
+                    cache_dir=MODEL_DIR,
                     force_download=False
                 )
             except Exception as e:
                 print(f"ONNX 下载失败: {e}")
                 # 回退方案：使用 requests 直接下载
                 onnx_url = f"https://huggingface.co/{MODEL_REPO}/resolve/main/{ONNX_MODEL_FILE}"
-                onnx_path = os.path.join(cache_dir, ONNX_MODEL_FILE)
+                onnx_path = os.path.join(MODEL_DIR, ONNX_MODEL_FILE)
 
                 print(f"尝试直接下载: {onnx_url}")
                 response = requests.get(onnx_url, stream=True)

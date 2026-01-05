@@ -180,7 +180,7 @@ class ONNXImageTagger:
         return batch_results
 
 
-def process_single_image(image_path, model_path, metadata, threshold=0.61, category_thresholds=None,
+def process_single_image(model_path, metadata, image_path, threshold=0.61, category_thresholds=None,
                          min_confidence=0.01):
     """
     处理单张图像

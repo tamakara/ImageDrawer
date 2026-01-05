@@ -24,6 +24,8 @@ public class StorageService {
 
     @Value("${app.storage.temp-dir}")
     private String tempDir;
+ @Value("${app.storage.thumbnail-dir}")
+    private String thumbnailDir;
 
     @PostConstruct
     public void init() {
@@ -57,7 +59,7 @@ public class StorageService {
     public Path getThumbnailPath(String hash, int quality, int maxSize) {
         try {
             Path source = Paths.get(imageDir).resolve(hash);
-            Path target = Paths.get(tempDir).resolve(hash + "_" + maxSize + "_" + quality + ".jpg");
+            Path target = Paths.get(thumbnailDir).resolve(hash + "_" + maxSize + "_" + quality + ".jpg");
 
             if (Files.exists(target)) {
                 return target;

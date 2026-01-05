@@ -33,6 +33,14 @@ public class SystemSettingService {
         defaults.put("upload.allowed-extensions", "jpg,png,webp,gif,jpeg");
         defaults.put("thumbnail.quality", "80");
         defaults.put("thumbnail.max-size", "800");
+        defaults.put("tagger.threshold", "0.6");
+        defaults.put("tagger.minConfidence", "0.1");
+        defaults.put("tagger.category_thresholds.artist", "");
+        defaults.put("tagger.category_thresholds.character", "");
+        defaults.put("tagger.category_thresholds.copyright", "");
+        defaults.put("tagger.category_thresholds.general", "");
+        defaults.put("tagger.category_thresholds.meta", "");
+        defaults.put("tagger.category_thresholds.rating", "");
 
         for (Map.Entry<String, String> entry : defaults.entrySet()) {
             if (!systemSettingRepository.existsById(entry.getKey())) {

@@ -22,8 +22,8 @@ public class UploadController {
     @Operation(summary = "上传文件", description = "上传单个文件并开始处理")
     public UploadTask uploadFile(
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "taggerServerId", required = false) Long taggerServerId) {
-        return uploadQueueService.createTask(file, taggerServerId);
+            @RequestParam(value = "enableTagging", required = false, defaultValue = "true") Boolean enableTagging) {
+        return uploadQueueService.createTask(file, enableTagging);
     }
 
     @GetMapping("/tasks")

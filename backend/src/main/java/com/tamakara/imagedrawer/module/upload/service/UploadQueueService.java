@@ -1,12 +1,11 @@
 package com.tamakara.imagedrawer.module.upload.service;
 
+import com.tamakara.imagedrawer.module.file.service.StorageService;
 import com.tamakara.imagedrawer.module.gallery.entity.Image;
 import com.tamakara.imagedrawer.module.gallery.repository.ImageRepository;
-import com.tamakara.imagedrawer.module.file.service.StorageService;
 import com.tamakara.imagedrawer.module.search.entity.Tag;
 import com.tamakara.imagedrawer.module.search.repository.TagRepository;
 import com.tamakara.imagedrawer.module.system.service.SystemSettingService;
-import com.tamakara.imagedrawer.module.tagger.dto.TaggerResponseDto;
 import com.tamakara.imagedrawer.module.tagger.service.TaggerService;
 import com.tamakara.imagedrawer.module.upload.model.UploadTask;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +17,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -38,7 +36,7 @@ public class UploadQueueService {
     // 内存队列存储
     private final Map<String, UploadTask> taskMap = new ConcurrentHashMap<>();
 
-    public UploadTask createTask(MultipartFile file, Long taggerServerId) {
+    public UploadTask createTask(MultipartFile file, Boolean enableTagging) {
         String taskId = UUID.randomUUID().toString();
         UploadTask task = new UploadTask();
         task.setId(taskId);
@@ -46,7 +44,7 @@ public class UploadQueueService {
         task.setSize(file.getSize());
         task.setCreatedAt(LocalDateTime.now());
         task.setUpdatedAt(LocalDateTime.now());
-        task.setTaggerServerId(taggerServerId);
+        task.setEnableTagging(enableTagging != null && enableTagging);
 
         try {
             // 1. 验证文件
@@ -137,26 +135,24 @@ public class UploadQueueService {
             Set<Tag> tags = new HashSet<>();
 
             // 2. 打标签
-            if (task.getTaggerServerId() != null) {
+            if (task.isEnableTagging()) {
                 updateStatus(task, UploadTask.UploadStatus.TAGGING);
                 try {
-                    // 生成适合打标签的缩略图
-                    //TODO: 这里的尺寸可以配置
-                    Path tagImageFile = storageService.getThumbnailPath(hash, 100, 1000);
-                    List<TaggerResponseDto.TaggerTag> taggerTags
-                            = taggerService.tagImage(task.getTaggerServerId(), tagImageFile);
-                    Files.deleteIfExists(tagImageFile);
+                    // 调用 TaggerService 获取标签
+                    Map<String, List<String>> tagData = taggerService.tagImage(hash);
 
-                    // 将 TaggerTags 转换为实体
-                    for (TaggerResponseDto.TaggerTag tt : taggerTags) {
-                        Tag tag = tagRepository.findByName(tt.getName())
-                                .orElseGet(() -> {
-                                    Tag newTag = new Tag();
-                                    newTag.setName(tt.getName());
-                                    newTag.setType("general"); // 默认类型
-                                    return tagRepository.save(newTag);
-                                });
-                        tags.add(tag);
+                    // 将 TagData 转换为实体
+                    for (String tagType : tagData.keySet()) {
+                        for (String tagName : tagData.get(tagType)) {
+                            Tag tag = tagRepository.findByName(tagName)
+                                    .orElseGet(() -> {
+                                        Tag newTag = new Tag();
+                                        newTag.setName(tagName);
+                                        newTag.setType(tagType);
+                                        return tagRepository.save(newTag);
+                                    });
+                            tags.add(tag);
+                        }
                     }
                 } catch (Exception e) {
                     log.error("Tagging failed for task " + taskId, e);

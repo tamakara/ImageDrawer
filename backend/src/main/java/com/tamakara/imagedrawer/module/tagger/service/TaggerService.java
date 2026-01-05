@@ -1,62 +1,77 @@
 package com.tamakara.imagedrawer.module.tagger.service;
 
+import com.tamakara.imagedrawer.module.system.service.SystemSettingService;
+import com.tamakara.imagedrawer.module.tagger.dto.TaggerRequestDto;
 import com.tamakara.imagedrawer.module.tagger.dto.TaggerResponseDto;
-import com.tamakara.imagedrawer.module.tagger.entity.TaggerServerConfig;
-import com.tamakara.imagedrawer.module.tagger.repository.TaggerServerConfigRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.FileSystemResource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.reactive.function.client.WebClient;
 
-import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class TaggerService {
 
-    private final TaggerServerConfigRepository taggerServerConfigRepository;
-    private final RestClient.Builder restClientBuilder;
+    private final WebClient webClient;
+    private final SystemSettingService systemSettingService;
 
-    public List<TaggerServerConfig> listServers() {
-        return taggerServerConfigRepository.findAll();
-    }
+    @Value("${app.tagger.url}")
+    private String taggerUrl;
 
-    public TaggerServerConfig addServer(TaggerServerConfig config) {
-        return taggerServerConfigRepository.save(config);
-    }
-
-    public void deleteServer(Long id) {
-        taggerServerConfigRepository.deleteById(id);
-    }
-
-    public List<TaggerResponseDto.TaggerTag> tagImage(Long serverId, Path imagePath) {
-        TaggerServerConfig server = taggerServerConfigRepository.findById(serverId)
-                .orElseThrow(() -> new RuntimeException("Tagger server not found"));
-
-        if (!server.isActive()) {
-            throw new RuntimeException("Tagger server is not active");
+    private void addSettingIfPresent(Map<String, Double> categoryThresholds, String category, String settingKey) {
+        String value = systemSettingService.getSetting(settingKey, "");
+        if (StringUtils.hasText(value)) {
+            categoryThresholds.put(category, Double.parseDouble(value));
         }
+    }
 
-        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", new FileSystemResource(imagePath));
+    public Map<String, List<String>> tagImage(String image_hash) {
+        Map<String, Double> categoryThresholds = new HashMap<>();
 
-        TaggerResponseDto response = restClientBuilder.build()
+        addSettingIfPresent(categoryThresholds, "artist", "tagger.category_thresholds.artist");
+        addSettingIfPresent(categoryThresholds, "character", "tagger.category_thresholds.character");
+        addSettingIfPresent(categoryThresholds, "copyright", "tagger.category_thresholds.copyright");
+        addSettingIfPresent(categoryThresholds, "general", "tagger.category_thresholds.general");
+        addSettingIfPresent(categoryThresholds, "meta", "tagger.category_thresholds.meta");
+        addSettingIfPresent(categoryThresholds, "rating", "tagger.category_thresholds.rating");
+
+        TaggerRequestDto body = new TaggerRequestDto();
+        body.setImageHash(image_hash);
+        body.setThreshold(Double.parseDouble(systemSettingService.getSetting("tagger.threshold", "0.6")));
+        body.setMinConfidence(Double.parseDouble(systemSettingService.getSetting("tagger.minConfidence", "0.1")));
+        body.setCategoryThresholds(categoryThresholds);
+
+        TaggerResponseDto response = webClient
                 .post()
-                .uri(server.getUrl())
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(body)
+                .uri(taggerUrl)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(body)
                 .retrieve()
-                .body(TaggerResponseDto.class);
+                .onStatus(
+                        HttpStatusCode::isError,
+                        r -> r.bodyToMono(String.class)
+                                .map(msg -> new RuntimeException("Tagger error: " + msg))
+                )
+                .bodyToMono(TaggerResponseDto.class)
+                .block(); // 同步等结果
 
         if (response != null && response.isSuccess() && response.getData() != null) {
-            return response.getData().getTags();
+            return response.getData();
         } else {
             String error = response != null ? response.getError() : "Unknown error";
             throw new RuntimeException("Tagging failed: " + error);
         }
     }
+
+
 }

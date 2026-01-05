@@ -31,13 +31,11 @@ CREATE TABLE image_tags
     FOREIGN KEY (tag_id) REFERENCES tags (id) ON DELETE CASCADE
 );
 
--- Create Tagger Server Configs table
-CREATE TABLE tagger_server_configs
+-- Create Tagger Settings table
+CREATE TABLE tagger_settings
 (
-    id     INTEGER PRIMARY KEY,
-    name   TEXT NOT NULL,
-    url    TEXT NOT NULL,
-    active BOOLEAN DEFAULT 1
+    setting_key   TEXT PRIMARY KEY,
+    setting_value TEXT
 );
 
 -- Create System Settings table

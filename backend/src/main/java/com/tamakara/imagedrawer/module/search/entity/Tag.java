@@ -17,6 +17,6 @@ public class Tag {
     @Column(unique = true, nullable = false)
     private String name;
 
-    private String type; // 通用, 角色, 版权, 艺术家, 元数据
+    private String type;
 }
 

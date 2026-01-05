@@ -16,7 +16,7 @@ public class UploadTask {
 
     // 内部使用
     private String tempFilePath;
-    private Long taggerServerId;
+    private boolean enableTagging;
 
     public enum UploadStatus {
         PENDING,
