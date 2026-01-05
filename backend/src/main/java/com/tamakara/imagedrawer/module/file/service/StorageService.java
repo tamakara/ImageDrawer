@@ -1,8 +1,8 @@
 package com.tamakara.imagedrawer.module.file.service;
 
-import jakarta.annotation.PostConstruct;
+import com.tamakara.imagedrawer.config.AppPaths;
+import lombok.RequiredArgsConstructor;
 import net.coobird.thumbnailator.Thumbnails;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -10,34 +10,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Comparator;
 import java.util.stream.Stream;
 
 @Service
+@RequiredArgsConstructor
 public class StorageService {
-    @Value("${app.storage.image-dir}")
-    private String imageDir;
 
-    @Value("${app.storage.temp-dir}")
-    private String tempDir;
-
-    @Value("${app.storage.thumbnail-dir}")
-    private String thumbnailDir;
-
-    @PostConstruct
-    public void init() {
-        try {
-            Files.createDirectories(Paths.get(imageDir));
-            Files.createDirectories(Paths.get(tempDir));
-            Files.createDirectories(Paths.get(thumbnailDir));
-        } catch (IOException e) {
-            throw new RuntimeException("Could not initialize storage", e);
-        }
-    }
+    private final AppPaths appPaths;
 
     public String store(MultipartFile file) {
         try {
@@ -45,7 +27,7 @@ public class StorageService {
                 throw new RuntimeException("Failed to store empty file.");
             }
             String hash = calculateHash(file);
-            Path destinationFile = Paths.get(imageDir).resolve(hash).normalize().toAbsolutePath();
+            Path destinationFile = appPaths.getImageDir().resolve(hash).normalize().toAbsolutePath();
 
             if (!Files.exists(destinationFile)) {
                 try (InputStream inputStream = file.getInputStream()) {
@@ -60,8 +42,8 @@ public class StorageService {
 
     public Path getThumbnailPath(String hash, int quality, int maxSize) {
         try {
-            Path source = Paths.get(imageDir).resolve(hash);
-            Path target = Paths.get(thumbnailDir).resolve(hash + "_" + maxSize + "_" + quality + ".jpg");
+            Path source = appPaths.getImageDir().resolve(hash);
+            Path target = appPaths.getThumbnailDir().resolve(hash + "_" + maxSize + "_" + quality + ".jpg");
 
             if (Files.exists(target)) {
                 return target;
@@ -80,12 +62,11 @@ public class StorageService {
     }
 
     public void clearCache() {
-        Path dir = Paths.get(tempDir);
+        Path dir = appPaths.getTempDir();
         if (!Files.exists(dir)) return;
 
-        try {
-            Files.walk(dir)
-                    .filter(Files::isRegularFile)
+        try (Stream<Path> stream = Files.walk(dir)) {
+            stream.filter(Files::isRegularFile)
                     .forEach(path -> {
                         try {
                             Files.deleteIfExists(path);
@@ -98,7 +79,7 @@ public class StorageService {
     }
 
     public Path getFilePath(String hash) {
-        return Paths.get(imageDir).resolve(hash);
+        return appPaths.getImageDir().resolve(hash);
     }
 
     public String calculateHash(MultipartFile file) {

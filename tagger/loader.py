@@ -9,10 +9,7 @@ ONNX_MODEL_FILE = "camie-tagger-v2.onnx"
 METADATA_FILE = "camie-tagger-v2-metadata.json"
 
 
-from app.config import MODEL_DIR
-
-
-def get_model_files():
+def get_model_files(model_dir):
     """从 HF Hub 下载模型文件并返回路径"""
     try:
         # 1. 获取元数据
@@ -21,7 +18,7 @@ def get_model_files():
             metadata_path = hf_hub_download(
                 repo_id=MODEL_REPO,
                 filename=METADATA_FILE,
-                cache_dir=MODEL_DIR,
+                cache_dir=model_dir,
                 local_files_only=True
             )
             print("找到本地元数据。")
@@ -30,7 +27,7 @@ def get_model_files():
             metadata_path = hf_hub_download(
                 repo_id=MODEL_REPO,
                 filename=METADATA_FILE,
-                cache_dir=MODEL_DIR
+                cache_dir=model_dir
             )
 
         # 2. 获取 ONNX 模型
@@ -39,7 +36,7 @@ def get_model_files():
             onnx_path = hf_hub_download(
                 repo_id=MODEL_REPO,
                 filename=ONNX_MODEL_FILE,
-                cache_dir=MODEL_DIR,
+                cache_dir=model_dir,
                 local_files_only=True
             )
             print("找到本地 ONNX 模型。")
@@ -50,14 +47,14 @@ def get_model_files():
                 onnx_path = hf_hub_download(
                     repo_id=MODEL_REPO,
                     filename=ONNX_MODEL_FILE,
-                    cache_dir=MODEL_DIR,
+                    cache_dir=model_dir,
                     force_download=False
                 )
             except Exception as e:
                 print(f"ONNX 下载失败: {e}")
                 # 回退方案：使用 requests 直接下载
                 onnx_url = f"https://huggingface.co/{MODEL_REPO}/resolve/main/{ONNX_MODEL_FILE}"
-                onnx_path = os.path.join(MODEL_DIR, ONNX_MODEL_FILE)
+                onnx_path = os.path.join(model_dir, ONNX_MODEL_FILE)
 
                 print(f"尝试直接下载: {onnx_url}")
                 response = requests.get(onnx_url, stream=True)
@@ -78,11 +75,11 @@ def get_model_files():
         return None
 
 
-def load_model_and_metadata():
+def load_model_and_metadata(model_dir):
     """从 HF Hub 加载模型和元数据"""
 
     # 下载模型文件
-    model_files = get_model_files()
+    model_files = get_model_files(model_dir)
     if not model_files:
         return None, None, {}
 

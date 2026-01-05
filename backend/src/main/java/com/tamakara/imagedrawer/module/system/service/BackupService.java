@@ -5,6 +5,7 @@ import com.tamakara.imagedrawer.module.gallery.entity.Image;
 import com.tamakara.imagedrawer.module.gallery.repository.ImageRepository;
 import com.tamakara.imagedrawer.module.tags.entity.Tag;
 import com.tamakara.imagedrawer.module.tags.repository.TagRepository;
+import com.tamakara.imagedrawer.config.AppPaths;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -37,12 +38,7 @@ public class BackupService {
     private final TagRepository tagRepository;
     private final SystemSettingService systemSettingService;
     private final StorageService storageService;
-
-    @Value("${app.storage.image-dir}")
-    private String imageDir;
-
-    @Value("${app.storage.temp-dir}")
-    private String tempDir;
+    private final AppPaths appPaths;
 
     @Value("${spring.datasource.url}")
     private String dbUrl;
@@ -52,7 +48,7 @@ public class BackupService {
         String dbPath = dbUrl.replace("jdbc:sqlite:", "");
 
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-        File backupFile = new File(tempDir, "backup_" + timestamp + ".zip");
+        File backupFile = appPaths.getTempDir().resolve("backup_" + timestamp + ".zip").toFile();
 
         try (FileOutputStream fos = new FileOutputStream(backupFile);
              ZipOutputStream zos = new ZipOutputStream(fos)) {
@@ -64,7 +60,7 @@ public class BackupService {
             }
 
             // 备份图片
-            File images = new File(imageDir);
+            File images = appPaths.getImageDir().toFile();
             if (images.exists() && images.isDirectory()) {
                 addDirectoryToZip(images, "images", zos);
             }
@@ -80,7 +76,7 @@ public class BackupService {
         storageService.clearCache();
         systemSettingService.resetSettings();
 
-        File images = new File(imageDir);
+        File images = appPaths.getImageDir().toFile();
         if (images.exists()) {
             FileUtils.cleanDirectory(images);
         }
@@ -88,7 +84,7 @@ public class BackupService {
 
     public void restoreBackup(MultipartFile file) throws IOException {
         // 解压到临时目录
-        Path tempExtractDir = Paths.get(tempDir, "restore_" + System.currentTimeMillis());
+        Path tempExtractDir = appPaths.getTempDir().resolve("restore_" + System.currentTimeMillis());
         Files.createDirectories(tempExtractDir);
 
         try (ZipInputStream zis = new ZipInputStream(file.getInputStream())) {
@@ -184,7 +180,7 @@ public class BackupService {
 
                 File sourceFile = new File(tempDir, "images/" + hash);
                 if (sourceFile.exists()) {
-                    File destFile = new File(imageDir, hash);
+                    File destFile = appPaths.getImageDir().resolve(hash).toFile();
                     FileUtils.copyFile(sourceFile, destFile);
                 }
             }
@@ -252,4 +248,3 @@ public class BackupService {
         return destFile;
     }
 }
-

@@ -1,12 +1,26 @@
+import argparse
 import asyncio
+import os
 import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
+
+import uvicorn
 from fastapi import FastAPI
 
-from app.config import IMAGE_DIR
-from app.dto import TagData, TaggerResponse, TaggerRequest
-from app.inference import process_single_image
-from app.loader import load_model_and_metadata
+from dto import TagData, TaggerResponse, TaggerRequest
+from inference import process_single_image
+from loader import load_model_and_metadata
+
+# 数据目录
+parser = argparse.ArgumentParser()
+parser.add_argument("--data_dir", type=str, required=True)
+args = parser.parse_args()
+
+DATA_DIR = Path(args.data_dir)
+IMAGE_DIR = DATA_DIR / "image"
+TEMP_DIR = DATA_DIR / "temp"
+MODEL_DIR = DATA_DIR / "model"
 
 global status
 global model_path
@@ -19,10 +33,14 @@ async def lifespan(app: FastAPI):
     global model_path
     global metadata
 
+    # 确保目录存在
+    for d in [IMAGE_DIR, TEMP_DIR, MODEL_DIR]:
+        os.makedirs(d, exist_ok=True)
+
     status = "unavailable"
 
     print("正在加载模型...")
-    model_path, metadata = load_model_and_metadata()
+    model_path, metadata = load_model_and_metadata(MODEL_DIR)
 
     if not model_path:
         print("错误: 模型不可用。")
@@ -90,3 +108,7 @@ async def tag_image(request: TaggerRequest) -> TaggerResponse:
         return TaggerResponse.ok(data)
     except Exception as e:
         return TaggerResponse.fail(str(e))
+
+
+if __name__ == "__main__":
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
