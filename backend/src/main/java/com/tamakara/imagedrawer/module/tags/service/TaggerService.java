@@ -1,17 +1,14 @@
-package com.tamakara.imagedrawer.module.tagger.service;
+package com.tamakara.imagedrawer.module.tags.service;
 
 import com.tamakara.imagedrawer.module.system.service.SystemSettingService;
-import com.tamakara.imagedrawer.module.tagger.dto.TaggerRequestDto;
-import com.tamakara.imagedrawer.module.tagger.dto.TaggerResponseDto;
+import com.tamakara.imagedrawer.module.tags.dto.TaggerRequestDto;
+import com.tamakara.imagedrawer.module.tags.dto.TaggerResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.HashMap;

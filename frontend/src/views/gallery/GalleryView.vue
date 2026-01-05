@@ -19,7 +19,9 @@ import {
   NLayoutSider,
   NLayoutContent,
   NLayoutFooter,
-  NPagination
+  NPagination,
+  NAutoComplete,
+  type AutoCompleteOption
 } from 'naive-ui'
 import ImageDetail from '../../components/business/ImageDetail.vue'
 import {Search24Regular, Dismiss24Regular} from '@vicons/fluent'
@@ -27,9 +29,7 @@ import {Search24Regular, Dismiss24Regular} from '@vicons/fluent'
 // 表单状态
 const formState = reactive({
   keyword: '',
-  includedTags: [] as string[],
-  excludedTags: [] as string[],
-  anyTags: [] as string[],
+  tagSearch: '',
   sortBy: 'createdAt',
   sortDirection: 'DESC'
 })
@@ -40,16 +40,42 @@ const page = ref(1)
 const pageSize = ref(20)
 
 // 标签自动补全
-const tagQuery = ref('')
-const {data: availableTags} = useQuery({
-  queryKey: ['tags', tagQuery],
-  queryFn: () => tagsApi.listTags(tagQuery.value),
-  enabled: true
-})
-const tagOptions = computed(() => availableTags.value?.map(t => ({label: t.name, value: t.name})) || [])
+const tagOptions = ref<AutoCompleteOption[]>([])
 
-function handleTagSearch(query: string) {
-  tagQuery.value = query
+async function handleTagSearch(value: string) {
+  formState.tagSearch = value
+  if (!value) {
+    tagOptions.value = []
+    return
+  }
+
+  const lastWord = value.split(/\s+/).pop() || ''
+  if (!lastWord) {
+    tagOptions.value = []
+    return
+  }
+
+  const isExclude = lastWord.startsWith('-')
+  const query = isExclude ? lastWord.substring(1) : lastWord
+
+  if (!query) {
+    tagOptions.value = []
+    return
+  }
+
+  try {
+    const tags = await tagsApi.listTags(query)
+    // 找到最后一个单词的起始位置
+    const lastIndex = value.lastIndexOf(lastWord)
+    const prefix = value.substring(0, lastIndex)
+
+    tagOptions.value = tags.map(t => ({
+      label: (isExclude ? '-' : '') + t.name,
+      value: prefix + (isExclude ? '-' : '') + t.name + ' '
+    }))
+  } catch (e) {
+    console.error(e)
+  }
 }
 
 // 搜索操作
@@ -60,9 +86,7 @@ function handleSearch() {
 
 function handleReset() {
   formState.keyword = ''
-  formState.includedTags = []
-  formState.excludedTags = []
-  formState.anyTags = []
+  formState.tagSearch = ''
   formState.sortBy = 'createdAt'
   formState.sortDirection = 'DESC'
   handleSearch()
@@ -79,9 +103,7 @@ const {
     const sort = `${activeSearchState.value.sortBy},${activeSearchState.value.sortDirection}`
     return searchApi.search({
       keyword: activeSearchState.value.keyword,
-      includedTags: activeSearchState.value.includedTags,
-      excludedTags: activeSearchState.value.excludedTags,
-      anyTags: activeSearchState.value.anyTags
+      tagSearch: activeSearchState.value.tagSearch
     }, page.value - 1, pageSize.value, sort)
   }
 })
@@ -127,19 +149,14 @@ const sortOptions = [
               <n-input v-model:value="formState.keyword" placeholder="标题或文件名" @keydown.enter="handleSearch"/>
             </n-form-item>
 
-            <n-form-item label="包含标签 (AND)">
-              <n-select v-model:value="formState.includedTags" multiple filterable remote :options="tagOptions"
-                        @search="handleTagSearch" placeholder="选择标签"/>
-            </n-form-item>
-
-            <n-form-item label="排除标签 (NOT)">
-              <n-select v-model:value="formState.excludedTags" multiple filterable remote :options="tagOptions"
-                        @search="handleTagSearch" placeholder="选择标签"/>
-            </n-form-item>
-
-            <n-form-item label="任意标签 (OR)">
-              <n-select v-model:value="formState.anyTags" multiple filterable remote :options="tagOptions"
-                        @search="handleTagSearch" placeholder="选择标签"/>
+            <n-form-item label="标签搜索">
+              <n-auto-complete
+                  v-model:value="formState.tagSearch"
+                  :options="tagOptions"
+                  placeholder="输入标签，空格分隔，-排除"
+                  @update:value="handleTagSearch"
+                  @keydown.enter="handleSearch"
+              />
             </n-form-item>
 
             <n-form-item label="排序依据">

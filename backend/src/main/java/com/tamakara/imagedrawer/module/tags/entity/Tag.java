@@ -1,4 +1,4 @@
-package com.tamakara.imagedrawer.module.search.entity;
+package com.tamakara.imagedrawer.module.tags.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

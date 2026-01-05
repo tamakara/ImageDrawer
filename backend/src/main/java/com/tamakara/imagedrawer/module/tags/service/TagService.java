@@ -1,9 +1,9 @@
-package com.tamakara.imagedrawer.module.search.service;
+package com.tamakara.imagedrawer.module.tags.service;
 
-import com.tamakara.imagedrawer.module.search.dto.TagDto;
-import com.tamakara.imagedrawer.module.search.entity.Tag;
-import com.tamakara.imagedrawer.module.search.mapper.TagMapper;
-import com.tamakara.imagedrawer.module.search.repository.TagRepository;
+import com.tamakara.imagedrawer.module.tags.dto.TagDto;
+import com.tamakara.imagedrawer.module.tags.entity.Tag;
+import com.tamakara.imagedrawer.module.tags.mapper.TagMapper;
+import com.tamakara.imagedrawer.module.tags.repository.TagRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

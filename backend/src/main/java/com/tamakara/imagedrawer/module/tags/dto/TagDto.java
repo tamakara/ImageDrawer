@@ -1,4 +1,4 @@
-package com.tamakara.imagedrawer.module.search.dto;
+package com.tamakara.imagedrawer.module.tags.dto;
 
 import lombok.Data;
 

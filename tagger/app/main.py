@@ -1,3 +1,4 @@
+import asyncio
 import sys
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -53,14 +54,18 @@ def health():
 @app.post("/tag")
 async def tag_image(request: TaggerRequest) -> TaggerResponse:
     try:
-        result = process_single_image(
-            model_path=model_path,
-            metadata=metadata,
-            image_path=IMAGE_DIR / request.image_hash,
-            threshold=request.threshold,
-            category_thresholds=request.category_thresholds,
-            min_confidence=request.min_confidence,
-        )
+        # 限制并发访问
+        semaphore = asyncio.Semaphore(1)
+
+        async with semaphore:
+            result = process_single_image(
+                model_path=model_path,
+                metadata=metadata,
+                image_path=IMAGE_DIR / request.image_hash,
+                threshold=request.threshold,
+                category_thresholds=request.category_thresholds,
+                min_confidence=request.min_confidence,
+            )
 
         if not result['success']:
             print(f"处理图像时出错: {result.get('error')}")

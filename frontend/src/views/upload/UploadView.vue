@@ -1,29 +1,29 @@
 <script setup lang="ts">
-import {ref} from 'vue'
-import {useQuery, useMutation, useQueryClient} from '@tanstack/vue-query'
+import {h, ref} from 'vue'
+import {useMutation, useQuery, useQueryClient} from '@tanstack/vue-query'
 import {uploadApi, type UploadTask} from '../../api/upload'
-import {taggerApi} from '../../api/tagger'
 import {
-  NCard,
   NButton,
-  NSelect,
+  NCard,
+  NCheckbox,
+  NDataTable,
+  NIcon,
+  NP,
+  NTag,
+  NText,
   NUpload,
   NUploadDragger,
-  NIcon,
-  NText,
-  NP,
-  NDataTable,
-  NTag,
-  useMessage,
-  NCheckbox,
   type UploadCustomRequestOptions,
-  type UploadFileInfo
+  type UploadFileInfo,
+  useMessage
 } from 'naive-ui'
 import {
   Archive24Regular as ArchiveIcon,
-  Dismiss24Regular as DismissIcon,
-  Delete24Regular as DeleteIcon
+  Delete24Regular as DeleteIcon,
+  Dismiss24Regular as DismissIcon
 } from '@vicons/fluent'
+import PQueue from 'p-queue'
+
 
 const message = useMessage()
 const queryClient = useQueryClient()
@@ -34,6 +34,8 @@ const uploadFileList = ref<UploadFileInfo[]>([])
 
 // 上传逻辑
 const fileInput = ref<HTMLInputElement | null>(null)
+
+const queue = new PQueue({ concurrency: 3 })
 
 function triggerFolderUpload() {
   fileInput.value?.click()
@@ -49,8 +51,8 @@ const uploadMutation = useMutation({
   }
 })
 
-const customRequest = ({ file }: UploadCustomRequestOptions) => {
-  if (file.file) {
+const customRequest = ({file}: UploadCustomRequestOptions) => {
+  if (file.file && file.file.type.startsWith('image/')) {
     uploadMutation.mutate(file.file)
   }
   // 上传后立即从列表中移除，防止重复上传
@@ -63,27 +65,20 @@ const customRequest = ({ file }: UploadCustomRequestOptions) => {
 async function handleFiles(files: FileList | null) {
   if (!files) return
 
-  let fileArray = Array.from(files).filter(f => f.type.startsWith('image/'))
+  let fileArray = Array.from(files)
+      .filter(f => f.type.startsWith('image/') && !f.name.startsWith('.'))
 
   if (!recursiveScan.value) {
     fileArray = fileArray.filter(f => {
-      if (!f.webkitRelativePath) return true;
-      const parts = f.webkitRelativePath.split('/');
-      return parts.length <= 2;
+      const parts = f.webkitRelativePath?.split('/') ?? []
+      return parts.length <= 2
     })
   }
 
-  if (fileArray.length === 0) {
-    message.warning('未找到图片文件')
-    return
-  }
+  message.info(`发现 ${fileArray.length} 张图片，开始排队上传`)
 
-  message.info(`发现 ${fileArray.length} 张图片。`)
-
-  // 顺序上传或并行上传（限制并发）
-  // 为简单起见，我们直接全部触发。浏览器会限制并发请求。
   for (const file of fileArray) {
-    uploadMutation.mutate(file)
+    queue.add(() => uploadMutation.mutateAsync(file))
   }
 }
 
@@ -97,7 +92,7 @@ function onFileChange(e: Event) {
 const {data: tasks} = useQuery({
   queryKey: ['uploadTasks'],
   queryFn: uploadApi.listTasks,
-  refetchInterval: 1000 // 每秒轮询一次
+  refetchInterval: 500 // 每0.5秒轮询一次
 })
 
 const deleteTaskMutation = useMutation({
@@ -153,8 +148,6 @@ const columns = [
   }
 ]
 
-import {computed, h} from 'vue'
-
 </script>
 
 <template>
@@ -181,6 +174,7 @@ import {computed, h} from 'vue'
         <n-upload
             v-model:file-list="uploadFileList"
             multiple
+            accept="image/*"
             :show-file-list="false"
             :custom-request="customRequest"
         >

@@ -1,9 +1,10 @@
 package com.tamakara.imagedrawer.module.system.service;
 
+import com.tamakara.imagedrawer.module.file.service.StorageService;
 import com.tamakara.imagedrawer.module.gallery.entity.Image;
 import com.tamakara.imagedrawer.module.gallery.repository.ImageRepository;
-import com.tamakara.imagedrawer.module.search.entity.Tag;
-import com.tamakara.imagedrawer.module.search.repository.TagRepository;
+import com.tamakara.imagedrawer.module.tags.entity.Tag;
+import com.tamakara.imagedrawer.module.tags.repository.TagRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -35,6 +36,7 @@ public class BackupService {
     private final ImageRepository imageRepository;
     private final TagRepository tagRepository;
     private final SystemSettingService systemSettingService;
+    private final StorageService storageService;
 
     @Value("${app.storage.image-dir}")
     private String imageDir;
@@ -75,6 +77,7 @@ public class BackupService {
     public void resetSystem() throws IOException {
         imageRepository.deleteAll();
         tagRepository.deleteAll();
+        storageService.clearCache();
         systemSettingService.resetSettings();
 
         File images = new File(imageDir);

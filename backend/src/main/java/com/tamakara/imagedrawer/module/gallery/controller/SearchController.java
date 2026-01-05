@@ -1,8 +1,8 @@
-package com.tamakara.imagedrawer.module.search.controller;
+package com.tamakara.imagedrawer.module.gallery.controller;
 
 import com.tamakara.imagedrawer.module.gallery.dto.ImageDto;
-import com.tamakara.imagedrawer.module.search.dto.SearchRequestDto;
-import com.tamakara.imagedrawer.module.search.service.SearchService;
+import com.tamakara.imagedrawer.module.gallery.dto.SearchRequestDto;
+import com.tamakara.imagedrawer.module.gallery.service.SearchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

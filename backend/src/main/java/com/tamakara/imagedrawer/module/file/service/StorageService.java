@@ -14,6 +14,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Comparator;
 import java.util.stream.Stream;
 
 @Service
@@ -79,14 +80,19 @@ public class StorageService {
     }
 
     public void clearCache() {
-        try (Stream<Path> files = Files.list(Paths.get(tempDir))) {
-            files.forEach(file -> {
-                try {
-                    Files.delete(file);
-                } catch (IOException e) {
-                    // ignore
-                }
-            });
+        Path dir = Paths.get(tempDir);
+        if (!Files.exists(dir)) return;
+
+        try {
+            Files.walk(dir)
+                    .sorted(Comparator.reverseOrder())
+                    .filter(path -> !path.equals(dir))
+                    .forEach(path -> {
+                        try {
+                            Files.deleteIfExists(path);
+                        } catch (IOException ignored) {
+                        }
+                    });
         } catch (IOException e) {
             throw new RuntimeException("Failed to clear cache", e);
         }
@@ -94,14 +100,6 @@ public class StorageService {
 
     public Path getFilePath(String hash) {
         return Paths.get(imageDir).resolve(hash);
-    }
-
-    public Path createTempFile(String prefix, String suffix) {
-        try {
-            return Files.createTempFile(Paths.get(tempDir), prefix, suffix);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to create temp file", e);
-        }
     }
 
     public String calculateHash(MultipartFile file) {

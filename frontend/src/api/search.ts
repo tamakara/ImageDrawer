@@ -6,9 +6,7 @@ const apiClient = axios.create({
 })
 
 export interface SearchRequestDto {
-  includedTags: string[]
-  excludedTags: string[]
-  anyTags: string[]
+  tagSearch?: string
   keyword?: string
 }
 

@@ -1,6 +1,6 @@
 package com.tamakara.imagedrawer.module.gallery.dto;
 
-import com.tamakara.imagedrawer.module.search.dto.TagDto;
+import com.tamakara.imagedrawer.module.tags.dto.TagDto;
 import lombok.Data;
 
 import java.time.LocalDateTime;

@@ -2,7 +2,7 @@ package com.tamakara.imagedrawer.module.gallery.mapper;
 
 import com.tamakara.imagedrawer.module.gallery.dto.ImageDto;
 import com.tamakara.imagedrawer.module.gallery.entity.Image;
-import com.tamakara.imagedrawer.module.search.mapper.TagMapper;
+import com.tamakara.imagedrawer.module.tags.mapper.TagMapper;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;

@@ -1,6 +1,6 @@
-package com.tamakara.imagedrawer.module.search.repository;
+package com.tamakara.imagedrawer.module.tags.repository;
 
-import com.tamakara.imagedrawer.module.search.entity.Tag;
+import com.tamakara.imagedrawer.module.tags.entity.Tag;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

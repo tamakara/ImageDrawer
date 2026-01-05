@@ -17,7 +17,10 @@ export interface UploadTask {
 export const uploadApi = {
   uploadFile: async (file: File, enableTagging: boolean = true) => {
     const formData = new FormData()
-    formData.append('file', file)
+    // 处理文件名，确保不包含路径
+    // 有些浏览器在扫描文件夹时可能会把路径带入文件名，或者用户希望强制去除路径
+    const filename = file.name.split(/[/\\]/).pop() || file.name
+    formData.append('file', file, filename)
     formData.append('enableTagging', enableTagging.toString())
 
     const response = await apiClient.post<UploadTask>('/upload', formData, {

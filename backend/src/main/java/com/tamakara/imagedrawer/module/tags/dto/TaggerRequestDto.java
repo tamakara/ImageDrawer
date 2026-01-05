@@ -1,4 +1,4 @@
-package com.tamakara.imagedrawer.module.tagger.dto;
+package com.tamakara.imagedrawer.module.tags.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
