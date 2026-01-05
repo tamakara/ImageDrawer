@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {useQuery} from '@tanstack/vue-query'
 import {searchApi} from '../../api/search'
-import {tagsApi} from '../../api/tags'
 import {computed, ref, reactive} from 'vue'
 import {
   NSpin,
@@ -19,11 +18,10 @@ import {
   NLayoutSider,
   NLayoutContent,
   NLayoutFooter,
-  NPagination,
-  NAutoComplete,
-  type AutoCompleteOption
+  NPagination
 } from 'naive-ui'
 import ImageDetail from '../../components/business/ImageDetail.vue'
+import TagSearchInput from '../../components/business/TagSearchInput.vue'
 import {Search24Regular, Dismiss24Regular} from '@vicons/fluent'
 
 // 表单状态
@@ -38,45 +36,6 @@ const formState = reactive({
 const activeSearchState = ref({...formState})
 const page = ref(1)
 const pageSize = ref(20)
-
-// 标签自动补全
-const tagOptions = ref<AutoCompleteOption[]>([])
-
-async function handleTagSearch(value: string) {
-  formState.tagSearch = value
-  if (!value) {
-    tagOptions.value = []
-    return
-  }
-
-  const lastWord = value.split(/\s+/).pop() || ''
-  if (!lastWord) {
-    tagOptions.value = []
-    return
-  }
-
-  const isExclude = lastWord.startsWith('-')
-  const query = isExclude ? lastWord.substring(1) : lastWord
-
-  if (!query) {
-    tagOptions.value = []
-    return
-  }
-
-  try {
-    const tags = await tagsApi.listTags(query)
-    // 找到最后一个单词的起始位置
-    const lastIndex = value.lastIndexOf(lastWord)
-    const prefix = value.substring(0, lastIndex)
-
-    tagOptions.value = tags.map(t => ({
-      label: (isExclude ? '-' : '') + t.name,
-      value: prefix + (isExclude ? '-' : '') + t.name + ' '
-    }))
-  } catch (e) {
-    console.error(e)
-  }
-}
 
 // 搜索操作
 function handleSearch() {
@@ -150,12 +109,10 @@ const sortOptions = [
             </n-form-item>
 
             <n-form-item label="标签搜索">
-              <n-auto-complete
+              <tag-search-input
                   v-model:value="formState.tagSearch"
-                  :options="tagOptions"
                   placeholder="输入标签，空格分隔，-排除"
-                  @update:value="handleTagSearch"
-                  @keydown.enter="handleSearch"
+                  @search="handleSearch"
               />
             </n-form-item>
 

@@ -77,5 +77,4 @@ lerna-debug.log*
 *.sln
 *.sw?
 
-/data/
-/backend/src/main/resources/static/**
+/data/**

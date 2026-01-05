@@ -85,8 +85,7 @@ public class StorageService {
 
         try {
             Files.walk(dir)
-                    .sorted(Comparator.reverseOrder())
-                    .filter(path -> !path.equals(dir))
+                    .filter(Files::isRegularFile)
                     .forEach(path -> {
                         try {
                             Files.deleteIfExists(path);
@@ -94,7 +93,7 @@ public class StorageService {
                         }
                     });
         } catch (IOException e) {
-            throw new RuntimeException("Failed to clear cache", e);
+            throw new RuntimeException("Failed to clear files", e);
         }
     }
 

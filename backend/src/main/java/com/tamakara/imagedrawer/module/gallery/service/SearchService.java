@@ -12,7 +12,9 @@ import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -33,8 +35,8 @@ public class SearchService {
         Specification<Image> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            List<String> includedTags = new ArrayList<>();
-            List<String> excludedTags = new ArrayList<>();
+            Set<String> includedTags = new HashSet<>();
+            Set<String> excludedTags = new HashSet<>();
 
             // 解析标签搜索字符串
             if (request.getTagSearch() != null && !request.getTagSearch().trim().isEmpty()) {
