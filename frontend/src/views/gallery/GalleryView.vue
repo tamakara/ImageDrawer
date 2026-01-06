@@ -105,7 +105,12 @@ const sortOptions = [
         <div class="flex-1 overflow-y-auto p-4">
           <n-form size="small" label-placement="top">
             <n-form-item label="关键字">
-              <n-input v-model:value="formState.keyword" placeholder="标题或文件名" @keydown.enter="handleSearch"/>
+              <n-input
+                  v-model:value="formState.keyword"
+                  placeholder="标题或文件名"
+                  type="textarea"
+                  :autosize="{ minRows:2, maxRows:2 }"
+                  @keydown.enter="handleSearch"/>
             </n-form-item>
 
             <n-form-item label="标签搜索">

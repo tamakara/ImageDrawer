@@ -39,7 +39,7 @@ const menuOptions: MenuOption[] = [
   <n-layout class="h-screen">
     <n-layout-header bordered class="h-16 flex items-center px-4 justify-between">
       <div class="flex items-center shrink-0 mr-4">
-        <span class="text-xl font-bold">ImageDrawer</span>
+        <span class="text-xl font-bold">BaKaBooru</span>
       </div>
       <div class="hidden sm:flex flex-1 min-w-0 justify-end">
         <n-menu

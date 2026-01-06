@@ -80,3 +80,6 @@ lerna-debug.log*
 /data/
 /backend/src/main/resources/static/
 /.idea/
+/frontend/node/
+/tagger/build/tagger/
+/launcher/tagger/tagger.exe

@@ -1,6 +1,6 @@
 spring:
   application:
-    name: imagedrawer
+    name: bakabooru
 
   datasource:
     url: jdbc:sqlite:${app.data-dir}/db/data.sqlite

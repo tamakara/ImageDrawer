@@ -109,7 +109,7 @@ function handleEnter(e: KeyboardEvent) {
         type="textarea"
         :value="value"
         :placeholder="placeholder"
-        :autosize="{ minRows: 1, maxRows: 5 }"
+        :autosize="{ minRows:10, maxRows:10 }"
         @input="handleInput"
         @focus="handleFocus"
         @blur="handleBlur"
