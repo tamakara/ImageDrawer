@@ -27,14 +27,14 @@
 
 ```mermaid
 graph TD
-    User[用户 / 前端 UI] <-->|HTTP API| Web[Spring Boot (业务核心)]
-    Web <-->|HTTP / JSON| Tagger[FastAPI (标签生成服务)]
-    Web <-->|JDBC| DB[(SQLite 数据库)]
-    Web <-->|File System| FS[本地文件 / 缓存]
-    
-    subgraph "Unified Launcher (Windows EXE)"
-    Web
-    Tagger
+    User["用户 / 前端 UI"] -->|HTTP API| Web["Spring Boot (业务核心)"]
+    Web -->|HTTP / JSON| Tagger["FastAPI (标签生成服务)"]
+    Web -->|JDBC| DB["SQLite 数据库"]
+    Web -->|File System| FS["本地文件 / 缓存"]
+
+    subgraph Launcher["Unified Launcher (Windows EXE)"]
+        Web
+        Tagger
     end
 ```
 
