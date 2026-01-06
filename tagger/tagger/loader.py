@@ -96,3 +96,4 @@ def load_model_and_metadata(model_dir):
             print(f"加载元数据出错: {e}")
 
     return model_path, metadata
+

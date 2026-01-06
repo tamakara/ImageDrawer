@@ -14,6 +14,7 @@
     <modules>
         <module>frontend</module>
         <module>backend</module>
+        <module>tagger</module>
     </modules>
 
     <groupId>com.tamakara</groupId>

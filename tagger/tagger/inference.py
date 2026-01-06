@@ -12,7 +12,7 @@ from PIL import Image
 import torchvision.transforms as transforms
 
 
-def preprocess_image(image_path, image_size=512):
+def preprocess_image(image_path, image_size=512) -> np.ndarray:
     """
     预处理图像以进行推理，包含 ImageNet 标准化。
     """
@@ -104,7 +104,7 @@ class ONNXImageTagger:
         print(f"模型加载成功。输入名称: {self.input_name}")
         print(f"总标签数: {self.total_tags}, 分类数: {len(set(self.tag_to_category.values()))}")
 
-    def predict_batch(self, image_arrays, threshold=0.5, category_thresholds=None, min_confidence=0.1):
+    def predict_batch(self, image_arrays: list[np.ndarray], threshold=0.5, category_thresholds=None, min_confidence=0.1) -> list[dict]:
         """对预处理后的图像数组进行批量推理"""
         # 堆叠数组
         batch_input = np.stack(image_arrays)
