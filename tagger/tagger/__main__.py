@@ -5,7 +5,7 @@ import os
 import sys
 
 def main():
-    # PyInstaller 多进程支持 (Windows 下必需)
+    # PyInstaller 多进程支持
     multiprocessing.freeze_support()
 
     parser = argparse.ArgumentParser(description="Tagger 服务启动器")

@@ -72,6 +72,32 @@ export const galleryApi = {
       }
     })
     return response.data
+  },
+
+  regenerateTags: async (id: number) => {
+    const response = await apiClient.post<ImageDto>(`/images/${id}/tags/regenerate`)
+    return response.data
+  },
+
+  addTag: async (id: number, tag: Partial<TagDto>) => {
+    const response = await apiClient.post<ImageDto>(`/images/${id}/tags`, tag)
+    return response.data
+  },
+
+  removeTag: async (id: number, tagId: number) => {
+    const response = await apiClient.delete<ImageDto>(`/images/${id}/tags/${tagId}`)
+    return response.data
+  },
+
+  deleteImages: async (ids: number[]) => {
+    await apiClient.post('/images/batch/delete', ids)
+  },
+
+  downloadImages: async (ids: number[]) => {
+    const response = await apiClient.post('/images/batch/download', ids, {
+      responseType: 'blob'
+    })
+    return response.data
   }
 }
 

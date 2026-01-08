@@ -5,6 +5,10 @@ import com.tamakara.bakabooru.module.gallery.dto.ImageDto;
 import com.tamakara.bakabooru.module.gallery.entity.Image;
 import com.tamakara.bakabooru.module.gallery.mapper.ImageMapper;
 import com.tamakara.bakabooru.module.gallery.repository.ImageRepository;
+import com.tamakara.bakabooru.module.tags.dto.TagDto;
+import com.tamakara.bakabooru.module.tags.entity.Tag;
+import com.tamakara.bakabooru.module.tags.service.TagService;
+import com.tamakara.bakabooru.module.tags.service.TaggerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,8 +19,13 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +34,8 @@ public class ImageService {
     private final ImageRepository imageRepository;
     private final ImageMapper imageMapper;
     private final StorageService storageService;
+    private final TagService tagService;
+    private final TaggerService taggerService;
 
     @Transactional(readOnly = true)
     public Page<ImageDto> listImages(Pageable pageable) {
@@ -113,5 +124,92 @@ public class ImageService {
         }
 
         return imageMapper.toDto(imageRepository.save(image));
+    }
+
+    @Transactional
+    public ImageDto regenerateTags(Long id) {
+        Image image = imageRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Image not found"));
+
+        // Call tagger service
+        Map<String, List<String>> newTagsMap = taggerService.tagImage(image.getHash());
+
+        // Keep custom tags
+        Set<Tag> tagsToKeep = image.getTags().stream()
+                .filter(tag -> "custom".equals(tag.getType()))
+                .collect(Collectors.toSet());
+
+        // Process new tags
+        for (Map.Entry<String, List<String>> entry : newTagsMap.entrySet()) {
+            String type = entry.getKey();
+            List<String> names = entry.getValue();
+            for (String name : names) {
+                Tag tag = tagService.findOrCreateTag(name, type);
+                tagsToKeep.add(tag);
+            }
+        }
+
+        image.setTags(tagsToKeep);
+        image.setUpdatedAt(LocalDateTime.now());
+        return imageMapper.toDto(imageRepository.save(image));
+    }
+
+    @Transactional
+    public ImageDto addTag(Long id, TagDto tagDto) {
+        Image image = imageRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Image not found"));
+
+        Tag tag = tagService.findOrCreateTag(tagDto.getName(), tagDto.getType() != null ? tagDto.getType() : "custom");
+        image.getTags().add(tag);
+        image.setUpdatedAt(LocalDateTime.now());
+
+        return imageMapper.toDto(imageRepository.save(image));
+    }
+
+    @Transactional
+    public ImageDto removeTag(Long id, Long tagId) {
+        Image image = imageRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Image not found"));
+
+        image.getTags().removeIf(tag -> tag.getId().equals(tagId));
+        image.setUpdatedAt(LocalDateTime.now());
+
+        return imageMapper.toDto(imageRepository.save(image));
+    }
+
+    @Transactional
+    public void deleteImages(List<Long> ids) {
+        ids.forEach(id -> {
+            try {
+                deleteImage(id);
+            } catch (Exception e) {
+                // ignore
+            }
+        });
+    }
+
+    public void downloadImages(List<Long> ids, java.io.OutputStream outputStream) throws java.io.IOException {
+        List<Image> images = imageRepository.findAllById(ids);
+        if (images.isEmpty()) {
+            return;
+        }
+
+        try (java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(outputStream)) {
+            for (Image image : images) {
+                java.nio.file.Path file = storageService.getFilePath(image.getHash());
+                if (java.nio.file.Files.exists(file)) {
+                    // Unique entry name: title + id + extension
+                    String entryName = String.format("%s_%d.%s",
+                            image.getTitle().replaceAll("[\\\\/:*?\"<>|]", "_"),
+                            image.getId(),
+                            image.getExtension());
+
+                    java.util.zip.ZipEntry zipEntry = new java.util.zip.ZipEntry(entryName);
+                    zos.putNextEntry(zipEntry);
+                    java.nio.file.Files.copy(file, zos);
+                    zos.closeEntry();
+                }
+            }
+        }
     }
 }

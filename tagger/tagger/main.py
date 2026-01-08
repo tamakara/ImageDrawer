@@ -7,7 +7,6 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
-# 使用相对导入，适应包结构
 from .dto import TagData, TaggerResponse, TaggerRequest
 from .inference import process_single_image
 from .loader import load_model_and_metadata
@@ -18,25 +17,20 @@ model_path = None
 metadata = {}
 
 # 确定数据目录
-# 优先使用环境变量 TAGGER_DATA_DIR，否则尝试解析命令行参数
-data_dir_env = os.environ.get("TAGGER_DATA_DIR")
-if data_dir_env:
-    DATA_DIR = Path(data_dir_env)
-else:
-    # 使用 parse_known_args 避免与其他工具（如 uvicorn CLI）参数冲突
-    parser = argparse.ArgumentParser(description="Tagger 服务")
-    parser.add_argument("--data_dir", type=str, help="数据目录路径", default=None)
-    args, _ = parser.parse_known_args()
+# 使用 parse_known_args 避免与其他工具（如 uvicorn CLI）参数冲突
+parser = argparse.ArgumentParser(description="Tagger 服务")
+parser.add_argument("--data_dir", type=str, help="数据目录路径", default=None)
+args, _ = parser.parse_known_args()
 
-    if args.data_dir:
-        DATA_DIR = Path(args.data_dir)
-    else:
-        # 如果未提供，默认为当前目录下的 data 文件夹，或者抛出警告
-        # 为了保持原有逻辑的必需性，如果没有提供则报错，除非只是被导入检查
-        pass
-        # 注意: 这里如果不设置 DATA_DIR，后续会报错。
-        # 暂时设为 None，在 lifespan 中检查
-        DATA_DIR = None
+if args.data_dir:
+    DATA_DIR = Path(args.data_dir)
+else:
+    # 如果未提供，默认为当前目录下的 data 文件夹，或者抛出警告
+    # 为了保持原有逻辑的必需性，如果没有提供则报错，除非只是被导入检查
+    pass
+    # 注意: 这里如果不设置 DATA_DIR，后续会报错。
+    # 暂时设为 None，在 lifespan 中检查
+    DATA_DIR = None
 
 IMAGE_DIR = None
 TEMP_DIR = None
@@ -145,7 +139,4 @@ async def tag_image(request: TaggerRequest) -> TaggerResponse:
         import traceback
         traceback.print_exc()
         return TaggerResponse.fail(str(e))
-
-
-# 移除 __main__ 块，因为现在有专门的 __main__.py
 

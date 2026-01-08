@@ -12,7 +12,9 @@ import {
   NCheckbox,
   NTag,
   NDivider,
-  NTooltip
+  NTooltip,
+  NSelect,
+  NInputGroup
 } from 'naive-ui'
 import type {UploadCustomRequestOptions} from 'naive-ui'
 import {
@@ -26,7 +28,10 @@ import {
   DocumentTextOutline,
   ImageOutline,
   HardwareChipOutline,
-  PricetagOutline
+  PricetagOutline,
+  RefreshOutline,
+  AddOutline,
+  PencilOutline
 } from '@vicons/ionicons5'
 import {galleryApi, type ImageDto, type TagDto} from '../../api/gallery'
 import {useDateFormat} from '@vueuse/core'
@@ -47,6 +52,31 @@ const image = ref<ImageDto | null>(null)
 const loading = ref(false)
 const editingName = ref(false)
 const newName = ref('')
+const addingTag = ref(false)
+const newTagName = ref('')
+const newTagType = ref('general')
+const regenerating = ref(false)
+const isEditingTags = ref(false)
+
+
+const tagTypeOrder = ['custom', 'copyright', 'character', 'artist', 'general', 'meta', 'rating']
+
+const tagTypeMap: Record<string, string> = {
+  custom: '自定义',
+  copyright: '版权',
+  character: '角色',
+  artist: '作者',
+  general: '一般',
+  meta: '元数据',
+  rating: '分级'
+}
+
+const tagOptions = computed(() => {
+  return tagTypeOrder.map(type => ({
+    label: tagTypeMap[type],
+    value: type
+  }))
+})
 
 const formattedSize = computed(() => {
   if (!image.value) return ''
@@ -114,6 +144,53 @@ const handleDelete = async () => {
   }
 }
 
+const handleRegenerate = async () => {
+  if (!image.value) return
+  regenerating.value = true
+  try {
+    image.value = await galleryApi.regenerateTags(image.value.id)
+    message.success('标签已重新生成')
+  } catch (e) {
+    message.error('重新生成标签失败')
+  } finally {
+    regenerating.value = false
+  }
+}
+
+const startAddTag = () => {
+  addingTag.value = true
+  newTagName.value = ''
+  newTagType.value = 'general'
+}
+
+const handleAddTag = async () => {
+  if (!image.value || !newTagName.value.trim()) {
+    addingTag.value = false
+    return
+  }
+  try {
+    image.value = await galleryApi.addTag(image.value.id, {
+      name: newTagName.value.trim(),
+      type: newTagType.value
+    })
+    message.success('标签添加成功')
+  } catch (e) {
+    message.error('标签添加失败')
+  } finally {
+    addingTag.value = false
+  }
+}
+
+const handleRemoveTag = async (tag: TagDto) => {
+  if (!image.value) return
+  try {
+    image.value = await galleryApi.removeTag(image.value.id, tag.id)
+    message.success('标签已移除')
+  } catch (e) {
+    message.error('移除标签失败')
+  }
+}
+
 const handleDownload = () => {
   if (!image.value) return
   const link = document.createElement('a')
@@ -141,17 +218,6 @@ const handleReplace = async ({file, onFinish, onError}: UploadCustomRequestOptio
   }
 }
 
-const tagTypeOrder = ['copyright', 'character', 'artist', 'general', 'meta', 'rating']
-
-const tagTypeMap: Record<string, string> = {
-  copyright: '版权',
-  character: '角色',
-  artist: '作者',
-  general: '一般',
-  meta: '元数据',
-  rating: '分级'
-}
-
 const groupedTags = computed(() => {
   if (!image.value || !image.value.tags) return {}
 
@@ -173,6 +239,7 @@ const groupedTags = computed(() => {
 
 const getTagColor = (type: string) => {
   switch (type) {
+    case 'custom': return { color: 'rgba(0, 188, 212, 0.15)', textColor: '#00bcd4' }
     case 'copyright': return { color: 'rgba(213, 0, 249, 0.15)', textColor: '#e040fb' }
     case 'character': return { color: 'rgba(0, 200, 83, 0.15)', textColor: '#69f0ae' }
     case 'artist': return { color: 'rgba(255, 23, 68, 0.15)', textColor: '#ff5252' }
@@ -239,6 +306,71 @@ const getTagColor = (type: string) => {
               <n-icon :component="PricetagOutline"/>
               标签
             </div>
+            <div class="flex gap-2">
+              <n-button
+                  size="tiny"
+                  secondary
+                  circle
+                  :type="isEditingTags ? 'warning' : 'tertiary'"
+                  @click="isEditingTags = !isEditingTags"
+              >
+                <template #icon>
+                  <n-icon :component="PencilOutline"/>
+                </template>
+              </n-button>
+              <n-button
+                  size="tiny"
+                  secondary
+                  circle
+                  type="info"
+                  :loading="regenerating"
+                  @click="handleRegenerate"
+              >
+                <template #icon>
+                  <n-icon :component="RefreshOutline"/>
+                </template>
+              </n-button>
+              <n-button
+                  size="tiny"
+                  secondary
+                  circle
+                  type="primary"
+                  @click="startAddTag"
+                  v-if="!addingTag"
+              >
+                <template #icon>
+                  <n-icon :component="AddOutline"/>
+                </template>
+              </n-button>
+            </div>
+          </div>
+
+          <div v-if="addingTag" class="mb-2">
+            <n-input-group>
+              <n-select
+                  v-model:value="newTagType"
+                  :options="tagOptions"
+                  :style="{ width: '30%' }"
+                  size="small"
+              />
+              <n-input
+                  v-model:value="newTagName"
+                  placeholder="标签名称"
+                  size="small"
+                  autofocus
+                  @keyup.enter="handleAddTag"
+              />
+              <n-button size="small" type="primary" secondary @click="handleAddTag">
+                <template #icon>
+                  <n-icon :component="AddOutline"/>
+                </template>
+              </n-button>
+              <n-button size="small" type="error" secondary @click="addingTag = false">
+                <template #icon>
+                  <n-icon :component="CloseOutline"/>
+                </template>
+              </n-button>
+            </n-input-group>
           </div>
 
           <div v-if="image.tags?.length" class="flex flex-col gap-3">
@@ -253,7 +385,9 @@ const getTagColor = (type: string) => {
                       round
                       :bordered="false"
                       :color="getTagColor(type)"
-                      class="hover:opacity-80 transition-opacity cursor-default"
+                      :closable="isEditingTags"
+                      @close="handleRemoveTag(tag)"
+                      class="hover:opacity-80 transition-opacity"
                   >
                     {{ tag.name }}
                   </n-tag>

@@ -40,4 +40,15 @@ public class TagService {
     public void deleteTag(Long id) {
         tagRepository.deleteById(id);
     }
+
+    @Transactional
+    public Tag findOrCreateTag(String name, String type) {
+        return tagRepository.findByName(name)
+                .orElseGet(() -> {
+                    Tag tag = new Tag();
+                    tag.setName(name);
+                    tag.setType(type);
+                    return tagRepository.save(tag);
+                });
+    }
 }
