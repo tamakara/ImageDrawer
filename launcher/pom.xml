@@ -70,6 +70,9 @@
               <directory>dist</directory>
             </fileset>
             <fileset>
+              <directory>target</directory>
+            </fileset>
+            <fileset>
               <directory>web</directory>
               <includes>
                 <include>**/*</include>

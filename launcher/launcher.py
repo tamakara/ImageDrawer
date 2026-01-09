@@ -10,10 +10,10 @@ import argparse
 # 参数解析
 # ---------------------------------
 parser = argparse.ArgumentParser(description="BaKaBooru Launcher")
-parser.add_argument("--tagger-host", default="0.0.0.0", help="Tagger service host")
-parser.add_argument("--tagger-port", default="8081", help="Tagger service port")
 parser.add_argument("--web-host", default="0.0.0.0", help="Web service host")
 parser.add_argument("--web-port", default="8080", help="Web service port")
+parser.add_argument("--tagger-host", default="0.0.0.0", help="Tagger service host")
+parser.add_argument("--tagger-port", default="8081", help="Tagger service port")
 args = parser.parse_args()
 
 # ---------------------------------
@@ -42,8 +42,6 @@ def stream_logs(prefix, proc, log_file):
 # 启动 Tagger 服务器
 # ---------------------------------
 tagger_exe = BASE_DIR / "tagger" / "tagger.exe"
-tagger_host = args.tagger_host
-tagger_port = args.tagger_port
 if not tagger_exe.exists():
     raise FileNotFoundError(f"找不到 tagger.exe: {tagger_exe}")
 
@@ -51,8 +49,8 @@ tagger_proc = subprocess.Popen(
     [
         str(tagger_exe),
         f"--data_dir={str(DATA_DIR)}",
-        f"--host={tagger_host}",
-        f"--port={tagger_port}",
+        f"--host={args.tagger_host}",
+        f"--port={args.tagger_port}",
     ],
     cwd=str(tagger_exe.parent),
     stdout=subprocess.PIPE,
@@ -72,21 +70,19 @@ print("✅ Tagger 服务器运行中...")
 # ---------------------------------
 # 启动 Web 服务器
 # ---------------------------------
-web_jar = BASE_DIR / "web" / "web.jar"
-web_host = args.web_host
-web_port = args.web_port
-if not web_jar.exists():
-    raise FileNotFoundError(f"找不到 web.jar: {web_jar}")
+web_exe = BASE_DIR / "web" / "web.exe"
+if not web_exe.exists():
+    raise FileNotFoundError(f"找不到 web.exe: {web_exe}")
 
 web_proc = subprocess.Popen(
     [
-        'java', '-jar', str(web_jar),
-        f'--server.address={web_host}',
-        f'--server.port={web_port}',
+        str(web_exe),
+        f'--server.address={args.web_host}',
+        f'--server.port={args.web_port}',
         f'--app.data-dir={str(DATA_DIR)}',
-        f'--app.tagger.url=http://{tagger_host}:{tagger_port}/tag',
+        f'--app.tagger.url=http://{args.tagger_host}:{args.tagger_port}/tag',
     ],
-    cwd=str(web_jar.parent),
+    cwd=str(web_exe.parent),
     stdout=subprocess.PIPE,
     stderr=subprocess.STDOUT,
     text=True,

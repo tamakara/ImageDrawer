@@ -89,6 +89,9 @@
                         <fileset>
                             <directory>dist</directory>
                         </fileset>
+                        <fileset>
+                            <directory>target</directory>
+                        </fileset>
                     </filesets>
                 </configuration>
             </plugin>

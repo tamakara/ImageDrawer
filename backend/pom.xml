@@ -138,10 +138,39 @@
         </configuration>
       </plugin>
       <plugin>
+        <groupId>com.akathist.maven.plugins.launch4j</groupId>
+        <artifactId>launch4j-maven-plugin</artifactId>
+        <version>2.7.0</version>
+        <executions>
+          <execution>
+            <id>launch4j-package</id>
+            <phase>package</phase>
+            <goals>
+              <goal>launch4j</goal>
+            </goals>
+            <configuration>
+              <headerType>console</headerType>
+              <outfile>${project.build.directory}/${project.build.finalName}.exe</outfile>
+              <jar>${project.build.directory}/${project.build.finalName}.jar</jar>
+              <jre>
+                <path>jre</path>
+                <bundledJre64Bit>true</bundledJre64Bit>
+                <minVersion>21</minVersion>
+                <opts>
+                  <opt>-Dfile.encoding=UTF-8</opt>
+                  <opt>-Xms128m</opt>
+                  <opt>-Xmx512m</opt>
+                </opts>
+              </jre>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <artifactId>maven-antrun-plugin</artifactId>
         <executions>
           <execution>
-            <id>copy-web-jar</id>
+            <id>copy-web-exe</id>
             <phase>package</phase>
             <goals>
               <goal>run</goal>
@@ -149,8 +178,8 @@
             <configuration>
               <target>
                 <copy
-                  file="${project.build.directory}/${project.build.finalName}.jar"
-                  tofile="../launcher/web/web.jar"
+                  file="${project.build.directory}/${project.build.finalName}.exe"
+                  tofile="../launcher/web/web.exe"
                   overwrite="true"
                 />
               </target>

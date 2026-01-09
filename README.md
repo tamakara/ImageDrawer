@@ -125,6 +125,7 @@ bakabooru.exe --web-port 9090
 
 ### 编译环境
 除了上述运行环境外，编译阶段还需要：
+*   **Python**: 3.12+ (用于构建 Tagger 服务)
 *   **Node.js**: LTS 版本
 *   **Maven**: 3.9+
 

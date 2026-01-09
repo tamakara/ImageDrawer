@@ -6,7 +6,7 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ("web/web.jar", "web"),
+        ("web/web.exe", "web"),
         ("tagger/tagger.exe", "tagger"),
     ],
     hiddenimports=[],
