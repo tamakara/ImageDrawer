@@ -89,14 +89,13 @@ graph TD
 *   **业务后端**: Java 21, Spring Boot 3, Spring Data JPA, SQLite
 *   **AI 服务**: Python 3.10+, FastAPI, ONNX Runtime
 *   **前端交互**: Vue 3, TypeScript, Naive UI, Tailwind CSS, TanStack Query
-*   **部署构建**: PyInstaller, Maven, Vite
+*   **部署构建**: PyInstaller, Launch4j, Maven, Vite
 
 ## 🚀 运行说明
 
 ### 环境准备
-在运行 `bakabooru.exe` 前，请确保系统已安装并配置以下基础环境（需添加到 PATH 环境变量）：
-*   **Java**: JDK 21+
-*   **Python**: 3.12+
+✅ **无需安装任何环境**。
+得益于内置的独立运行环境（JRE & Python Runtime），BaKaBooru 实现了完全的 "开箱即用"。你不再需要手动配置 Java 或 Python 环境。
 
 ### 启动应用
 1.  双击运行项目根目录下的 `bakabooru.exe`。
@@ -124,8 +123,9 @@ bakabooru.exe --web-port 9090
 ## 📦 编译构建
 
 ### 编译环境
-除了上述运行环境外，编译阶段还需要：
-*   **Python**: 3.12+ (用于构建 Tagger 服务)
+若需从源码全量编译本项目，请确保开发环境已安装以下工具（需添加到 PATH）：
+*   **Java**: JDK 21+
+*   **Python**: 3.12+
 *   **Node.js**: LTS 版本
 *   **Maven**: 3.9+
 
