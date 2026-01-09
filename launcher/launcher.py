@@ -4,6 +4,17 @@ from pathlib import Path
 import threading
 import time
 import os
+import argparse
+
+# ---------------------------------
+# 参数解析
+# ---------------------------------
+parser = argparse.ArgumentParser(description="BaKaBooru Launcher")
+parser.add_argument("--tagger-host", default="0.0.0.0", help="Tagger service host")
+parser.add_argument("--tagger-port", default="8081", help="Tagger service port")
+parser.add_argument("--web-host", default="0.0.0.0", help="Web service host")
+parser.add_argument("--web-port", default="8080", help="Web service port")
+args = parser.parse_args()
 
 # ---------------------------------
 # 基础路径
@@ -31,8 +42,8 @@ def stream_logs(prefix, proc, log_file):
 # 启动 Tagger 服务器
 # ---------------------------------
 tagger_exe = BASE_DIR / "tagger" / "tagger.exe"
-tagger_host = "0.0.0.0"
-tagger_port = "8081"
+tagger_host = args.tagger_host
+tagger_port = args.tagger_port
 if not tagger_exe.exists():
     raise FileNotFoundError(f"找不到 tagger.exe: {tagger_exe}")
 
@@ -62,8 +73,8 @@ print("✅ Tagger 服务器运行中...")
 # 启动 Web 服务器
 # ---------------------------------
 web_jar = BASE_DIR / "web" / "web.jar"
-web_host = "0.0.0.0"
-web_port = "8080"
+web_host = args.web_host
+web_port = args.web_port
 if not web_jar.exists():
     raise FileNotFoundError(f"找不到 web.jar: {web_jar}")
 

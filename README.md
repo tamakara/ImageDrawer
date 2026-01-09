@@ -7,7 +7,7 @@
 ## ✨ 核心特性
 
 ### 🤖 强大的标签系统
-*   **AI 自动标注**: 集成深度学习视觉模型，上传即自动生成精准标签 (Tag)。
+*   **AI 自动标注**: 集成深度学习视觉模型（基于 [Camie Tagger V2](https://huggingface.co/spaces/Camais03/camie-tagger-v2-app)），上传即自动生成精准标签 (Tag)。
 *   **标签管理**: 支持重新生成标签、添加自定义标签（支持多种类型），具备完善的标签增删改查功能。
 *   **多维分类**: 标签自动归类显示（版权、角色、作者、自定义、元数据等），支持颜色区分，直观清晰。
 *   **安全编辑**: 需开启编辑模式（铅笔图标）才可删除标签，有效防止误操作。
@@ -22,25 +22,63 @@
 *   **体验优化**: 全局禁用浏览器默认右键菜单和图片拖拽，带来类似原生应用的操作体验。
 
 ### 🏗️ 稳健的系统架构
-采用 **多后端架构 + 统一交互界面**，由 Launcher 统一调度：
+
+BaKaBooru 采用 **多进程微服务架构**，通过 Launcher 统一调度管理。这种设计既保证了 Java 生态的稳健性，又充分利用了 Python 在 AI 领域的优势。
 
 ```mermaid
 graph TD
-    User["用户 / 前端 UI"] -->|HTTP API| SB["Spring Boot (业务核心)"]
-    SB -->|HTTP / JSON| FA["FastAPI (标签生成服务)"]
-    SB -->|JDBC| DB["SQLite 数据库"]
-    SB -->|File System| FS["本地文件 / 缓存"]
-
-    subgraph Launcher["Launcher (Windows EXE)"]
-        SB
-        FA
+    subgraph Client ["🖥️ 客户端层"]
+        UI["Web 前端 (Vue 3)"]
     end
+
+    subgraph Launcher ["🚀 BaKaBooru 启动器"]
+        direction TB
+        PM["进程管理器"]
+        
+        subgraph JavaProcess ["☕ 后端服务 (Spring Boot)"]
+            API["REST 接口"]
+            Core["业务逻辑"]
+            JPA["持久层"]
+        end
+
+        subgraph PythonProcess ["🐍 AI 服务 (FastAPI)"]
+            TagAPI["标签生成接口"]
+            Inference["ONNX 推理引擎"]
+        end
+    end
+
+    subgraph Storage ["💾 本地存储 (data/)"]
+        SQLite[("SQLite 数据库")]
+        Files["图片文件"]
+        Models["AI 模型"]
+    end
+
+    %% Interactions
+    User((用户)) <-->|浏览器| UI
+    PM -.->|启动| JavaProcess
+    PM -.->|启动| PythonProcess
+    
+    UI <-->|HTTP/REST| API
+    API <--> Core
+    Core <--> JPA
+    Core <-->|内部 HTTP| TagAPI
+    
+    JPA <-->|JDBC| SQLite
+    Core <-->|IO| Files
+    TagAPI <--> Inference
+    Inference <-->|加载| Models
 ```
 
-*   **Spring Boot**: 承载核心业务逻辑、文件管理与 API 接口。
-*   **FastAPI**: 专注于 AI 模型推理，提供高性能的标签生成服务。
-*   **Vue 3 Frontend**: 基于 Naive UI 打造的现代化 Web 界面。
-*   **Unified Launcher**: 将多服务封装为 Windows 可执行程序，实现一键启动。
+*   **Launcher (启动器)**: 基于 Python 编写的轻量级进程管理器，负责一键启动/通过管道停止子服务，并实时聚合日志输出。
+*   **Backend (业务核心)**: 
+    *   **Spring Boot**: 处理业务逻辑、元数据管理、文件 I/O 和 RESTful API 暴露。
+    *   **SQLite**: 选用无需配置的嵌入式数据库，存储标签、关联关系及配置信息。
+*   **AI Service (智能引擎)**:
+    *   **FastAPI**: 提供轻量级的高性能 HTTP 接口供后端调用。
+    *   **ONNX Runtime**: 运行量化后的深度学习模型，实现毫秒级的本地标签推理，无需昂贵的 GPU 显卡（支持 CPU 推理）。
+*   **Frontend (交互界面)**:
+    *   **Vue 3 + Naive UI**: 构建 SPA 单页应用，提供类 Native App 的流畅交互体验。
+    *   **Virtual Scroll**: 针对成千上万张图片的列表渲染进行深度优化。
 
 ### 💾 数据自主
 *   **本地存储**: 所有图片、数据库、模型权重均存储在本地 `data/` 目录，隐私安全，易于迁移。
@@ -53,46 +91,74 @@ graph TD
 *   **前端交互**: Vue 3, TypeScript, Naive UI, Tailwind CSS, TanStack Query
 *   **部署构建**: PyInstaller, Maven, Vite
 
-## 📦 快速开始 (Dev)
+## 🚀 运行说明
 
-### 前置要求
+### 环境准备
+在运行 `bakabooru.exe` 前，请确保系统已安装并配置以下基础环境（需添加到 PATH 环境变量）：
 *   **Java**: JDK 21+
-*   **Node.js**: LTS (推荐 pnpm)
-*   **Python**: 3.10+
+*   **Python**: 3.12+
 
-### 运行步骤
+### 启动应用
+1.  双击运行项目根目录下的 `bakabooru.exe`。
+2.  **数据存储**: 首次运行将在 EXE 同级目录自动生成 `data/` 文件夹，包含数据库、图片存储和模型。
+3.  **访问地址**: 启动后可通过浏览器访问 `http://localhost:8080` (端口视具体配置)。
+4.  **注意**: 这是一个 "Launcher" 程序，它会启动后台 Java 服务和 Python Tagger 服务，请勿关闭弹出的命令行窗口（若有）。
 
-1.  **启动业务后端**:
+### 🔧 高级配置 (命令行参数)
+`bakabooru.exe` 支持以下命令行参数，用于自定义端口或服务地址（适用于端口冲突或高级部署场景）：
+
+| 参数 | 默认值 | 说明 |
+| :--- | :--- | :--- |
+| `--web-host` | `0.0.0.0` | 业务后端/Web服务监听地址 |
+| `--web-port` | `8080` | 业务后端/Web服务监听端口 |
+| `--tagger-host` | `0.0.0.0` | Tagger 服务监听地址 |
+| `--tagger-port` | `8081` | Tagger 服务监听端口 |
+
+**使用示例**:
+在终端或快捷方式目标中添加参数：
+```bash
+# 修改 Web 端口为 9090
+bakabooru.exe --web-port 9090
+```
+
+## 📦 编译构建
+
+### 编译环境
+除了上述运行环境外，编译阶段还需要：
+*   **Node.js**: LTS 版本
+*   **Maven**: 3.9+
+
+### 一键编译
+在项目根目录下执行 Maven 命令，自动完成前端构建、后端打包以及 EXE 生成：
+
+```bash
+mvn clean install
+```
+
+构建完成后，项目根目录将生成唯一的可执行文件：`bakabooru.exe`。
+
+
+## 🛠️ 开发指南 (Dev)
+
+若需单独开发调试各模块：
+
+1.  **启动后端 (Backend)**:
     ```bash
     cd backend
     mvn spring-boot:run
     ```
 
-2.  **启动前端界面**:
+2.  **启动前端 (Frontend)**:
     ```bash
     cd frontend
     pnpm install && pnpm dev
     ```
 
-3.  **启动 AI Tagger 服务**:
+3.  **启动标签服务 (Tagger)**:
     ```bash
     cd tagger
     pip install -r requirements.txt
     python run_app.py --data_dir ../data
     ```
-
-访问前端页面: `http://localhost:5173`
-
-## 🗺️ 目录结构
-```
-BaKaBooru/
-├── backend/     # Spring Boot - 业务核心
-├── frontend/    # Vue 3 - 用户界面
-├── tagger/      # Python/FastAPI - AI 推理服务
-├── launcher/    # Python - Windows 一键启动器逻辑
-└── data/        # [自动生成] 数据存储 (DB, Images, Models, Cache)
-```
-
 ## 📄 许可证
 本项目采用 MIT 许可证。
-
