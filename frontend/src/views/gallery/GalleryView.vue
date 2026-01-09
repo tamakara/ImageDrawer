@@ -402,8 +402,8 @@ async function handleBatchDownload() {
     <n-layout class="h-full" content-style="display: flex; flex-direction: column; height: 100%;">
 
       <!-- 顶部功能栏 -->
-      <n-layout-header v-if="isSelectionMode" bordered class="p-3 bg-primary-50 dark:bg-gray-800 flex justify-between items-center transition-all">
-        <div class="flex items-center gap-4">
+      <n-layout-header bordered class="p-3 flex justify-between items-center transition-all" :class="isSelectionMode ? 'bg-primary-50 dark:bg-gray-800' : ''">
+        <div class="flex items-center gap-4" v-if="isSelectionMode">
           <n-button circle secondary @click="clearSelection">
             <template #icon>
               <n-icon><CloseCircleOutline /></n-icon>
@@ -411,15 +411,16 @@ async function handleBatchDownload() {
           </n-button>
           <span class="text-base font-medium">已选中 {{ selectedIds.size }} 项</span>
         </div>
+        <div v-else></div>
         <div class="flex gap-2">
           <n-button secondary @click="toggleSelectAll">
             {{ isAllSelected ? '取消全选' : '全选' }}
           </n-button>
-          <n-button type="info" secondary @click="handleBatchDownload">
+          <n-button type="info" secondary @click="handleBatchDownload" :disabled="!isSelectionMode">
             <template #icon><n-icon><DownloadOutline/></n-icon></template>
             下载
           </n-button>
-          <n-button type="error" secondary @click="handleBatchDelete">
+          <n-button type="error" secondary @click="handleBatchDelete" :disabled="!isSelectionMode">
             <template #icon><n-icon><TrashOutline/></n-icon></template>
             删除
           </n-button>
@@ -490,23 +491,23 @@ async function handleBatchDownload() {
         </div>
       </n-layout-footer>
     </n-layout>
-  </n-layout>
 
-  <ImageDetail
+    <ImageDetail
       v-model:show="showDetail"
       :image-id="selectedDetailImageId"
       @refresh="refetch"
-  />
+    />
 
-  <n-dropdown
-      placement="bottom-start"
-      trigger="manual"
-      :x="dropdownX"
-      :y="dropdownY"
-      :options="dropdownOptions"
-      :show="showDropdown"
-      :on-clickoutside="handleClickoutside"
-      @select="handleSelect"
-  />
+    <n-dropdown
+        placement="bottom-start"
+        trigger="manual"
+        :x="dropdownX"
+        :y="dropdownY"
+        :options="dropdownOptions"
+        :show="showDropdown"
+        :on-clickoutside="handleClickoutside"
+        @select="handleSelect"
+    />
+  </n-layout>
 </template>
 

@@ -83,3 +83,5 @@ lerna-debug.log*
 /frontend/node/
 /tagger/build/tagger/
 /launcher/tagger/tagger.exe
+/tagger/build/
+/launcher/build/

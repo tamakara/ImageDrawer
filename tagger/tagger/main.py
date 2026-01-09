@@ -16,31 +16,10 @@ status = "unavailable"
 model_path = None
 metadata = {}
 
-# 确定数据目录
-# 使用 parse_known_args 避免与其他工具（如 uvicorn CLI）参数冲突
-parser = argparse.ArgumentParser(description="Tagger 服务")
-parser.add_argument("--data_dir", type=str, help="数据目录路径", default=None)
-args, _ = parser.parse_known_args()
-
-if args.data_dir:
-    DATA_DIR = Path(args.data_dir)
-else:
-    # 如果未提供，默认为当前目录下的 data 文件夹，或者抛出警告
-    # 为了保持原有逻辑的必需性，如果没有提供则报错，除非只是被导入检查
-    pass
-    # 注意: 这里如果不设置 DATA_DIR，后续会报错。
-    # 暂时设为 None，在 lifespan 中检查
-    DATA_DIR = None
-
-IMAGE_DIR = None
-TEMP_DIR = None
-MODEL_DIR = None
-
-if DATA_DIR:
-    IMAGE_DIR = DATA_DIR / "image"
-    TEMP_DIR = DATA_DIR / "temp"
-    MODEL_DIR = DATA_DIR / "model"
-
+DATA_DIR =  Path(os.environ.get('TAGGER_DATA_DIR'))
+IMAGE_DIR = DATA_DIR / "image"
+TEMP_DIR = DATA_DIR / "temp"
+MODEL_DIR = DATA_DIR / "model"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -48,12 +27,12 @@ async def lifespan(app: FastAPI):
     global model_path
     global metadata
 
-    if DATA_DIR is None:
-        print("错误: 未指定数据目录。请设置 TAGGER_DATA_DIR 环境变量或提供 --data_dir 参数。")
+    if not DATA_DIR:
+        print("错误: 未指定数据目录。请设置 --data_dir 参数。")
         sys.exit(1)
 
     # 确保目录存在
-    for d in [IMAGE_DIR, TEMP_DIR, MODEL_DIR]:
+    for d in [DATA_DIR, IMAGE_DIR, TEMP_DIR, MODEL_DIR]:
         os.makedirs(d, exist_ok=True)
 
     status = "unavailable"

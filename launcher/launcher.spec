@@ -5,7 +5,10 @@ a = Analysis(
     ['launcher.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[
+        ("web/web.jar", "web"),
+        ("tagger/tagger.exe", "tagger"),
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

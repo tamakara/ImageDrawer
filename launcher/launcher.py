@@ -8,9 +8,11 @@ import os
 # ---------------------------------
 # 基础路径
 # ---------------------------------
-BASE_DIR = Path(sys.executable).parent.resolve()
+BASE_DIR = Path(sys._MEIPASS) if getattr(sys, 'frozen', False) else Path(sys.executable).parent.resolve()
 DATA_DIR = Path(sys.executable).parent / "data"
 LOG_DIR = Path(sys.executable).parent / "logs"
+
+DATA_DIR.mkdir(exist_ok=True)
 LOG_DIR.mkdir(exist_ok=True)
 
 # -------------------------
@@ -24,15 +26,23 @@ def stream_logs(prefix, proc, log_file):
             print(f"[{prefix}] {line}")
             print(line, file=f)
 
+
 # ---------------------------------
 # 启动 Tagger 服务器
 # ---------------------------------
 tagger_exe = BASE_DIR / "tagger" / "tagger.exe"
+tagger_host = "0.0.0.0"
+tagger_port = "8081"
 if not tagger_exe.exists():
     raise FileNotFoundError(f"找不到 tagger.exe: {tagger_exe}")
 
 tagger_proc = subprocess.Popen(
-    [str(tagger_exe), "--data_dir", str(DATA_DIR)],
+    [
+        str(tagger_exe),
+        f"--data_dir={str(DATA_DIR)}",
+        f"--host={tagger_host}",
+        f"--port={tagger_port}",
+    ],
     cwd=str(tagger_exe.parent),
     stdout=subprocess.PIPE,
     stderr=subprocess.STDOUT,
@@ -52,15 +62,18 @@ print("✅ Tagger 服务器运行中...")
 # 启动 Web 服务器
 # ---------------------------------
 web_jar = BASE_DIR / "web" / "web.jar"
+web_host = "0.0.0.0"
+web_port = "8080"
 if not web_jar.exists():
     raise FileNotFoundError(f"找不到 web.jar: {web_jar}")
 
 web_proc = subprocess.Popen(
     [
-        "java",
-        f"-Dapp.data-dir={DATA_DIR}",
-        "-jar",
-        str(web_jar)
+        'java', '-jar', str(web_jar),
+        f'--server.address={web_host}',
+        f'--server.port={web_port}',
+        f'--app.data-dir={str(DATA_DIR)}',
+        f'--app.tagger.url=http://{tagger_host}:{tagger_port}/tag',
     ],
     cwd=str(web_jar.parent),
     stdout=subprocess.PIPE,

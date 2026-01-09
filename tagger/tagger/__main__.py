@@ -11,18 +11,16 @@ def main():
     parser = argparse.ArgumentParser(description="Tagger 服务启动器")
     parser.add_argument("--data_dir", type=str, required=True, help="数据目录路径")
     parser.add_argument("--host", type=str, default="0.0.0.0", help="主机地址")
-    parser.add_argument("--port", type=int, default=8000, help="端口")
+    parser.add_argument("--port", type=int, default=8081, help="端口")
 
     # 解析参数
     args, _ = parser.parse_known_args()
 
     print(f"启动 Tagger 服务: {args.host}:{args.port}")
 
-    # 设置环境变量，供 tagger.main 模块使用，避免该模块重复解析参数
+    # 设置环境变量
     os.environ["TAGGER_DATA_DIR"] = args.data_dir
 
-    # 延迟导入 app 对象。
-    # 这样可以确保环境变量已经设置，且符合包的导入逻辑。
     try:
         from .main import app
     except ImportError:

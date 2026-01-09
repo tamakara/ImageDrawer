@@ -1,10 +1,8 @@
 # BaKaBooru
 
-> **给本地图片一个可搜索的语义层。**
+> ⚠️ **项目状态**: MVP (最小可行性产品) 阶段。核心功能已就绪，持续迭代中。
 
 **BaKaBooru** 是一个本地优先的现代化图片管理平台。它旨在解决海量本地图片（插画、AI 生图）管理难、检索难的问题。通过集成 AI 视觉模型，自动为图片建立语义标签，让混乱的文件夹变成井井有条的语义数据库。
-
-> ⚠️ **项目状态**: MVP (最小可行性产品) 阶段。核心功能已就绪，持续迭代中。
 
 ## ✨ 核心特性
 
@@ -28,14 +26,14 @@
 
 ```mermaid
 graph TD
-    User["用户 / 前端 UI"] -->|HTTP API| Web["Spring Boot (业务核心)"]
-    Web -->|HTTP / JSON| Tagger["FastAPI (标签生成服务)"]
-    Web -->|JDBC| DB["SQLite 数据库"]
-    Web -->|File System| FS["本地文件 / 缓存"]
+    User["用户 / 前端 UI"] -->|HTTP API| SB["Spring Boot (业务核心)"]
+    SB -->|HTTP / JSON| FA["FastAPI (标签生成服务)"]
+    SB -->|JDBC| DB["SQLite 数据库"]
+    SB -->|File System| FS["本地文件 / 缓存"]
 
-    subgraph Launcher["Unified Launcher (Windows EXE)"]
-        Web
-        Tagger
+    subgraph Launcher["Launcher (Windows EXE)"]
+        SB
+        FA
     end
 ```
 
