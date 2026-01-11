@@ -6,13 +6,7 @@ a = Analysis(
     pathex=['.'],
     binaries=[],
     datas=[],
-    hiddenimports=[
-        'uvicorn', 'uvicorn.logging', 'uvicorn.protocols', 'uvicorn.subprocess',
-        'uvicorn.loops', 'uvicorn.loops.auto', 'uvicorn.loops.asyncio',
-        'uvicorn.lifespan', 'uvicorn.lifespan.on', 'uvicorn.lifespan.off',
-        'fastapi', 'starlette', 'pydantic',
-        'onnxruntime', 'PIL', 'torchvision', 'huggingface_hub'
-    ],
+    hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

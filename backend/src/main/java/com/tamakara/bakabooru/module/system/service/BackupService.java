@@ -39,12 +39,7 @@ public class BackupService {
     private final StorageService storageService;
     private final AppPaths appPaths;
 
-    @Value("${spring.datasource.url}")
-    private String dbUrl;
-
     public File createBackup() throws IOException {
-        // 从 URL 解析数据库路径 (jdbc:sqlite:data/db/data.sqlite)
-        String dbPath = dbUrl.replace("jdbc:sqlite:", "");
 
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         File backupFile = appPaths.getTempDir().resolve("backup_" + timestamp + ".zip").toFile();
@@ -53,7 +48,7 @@ public class BackupService {
              ZipOutputStream zos = new ZipOutputStream(fos)) {
 
             // 备份数据库
-            File dbFile = new File(dbPath);
+            File dbFile = appPaths.getDbDir().toFile();
             if (dbFile.exists()) {
                 addToZip(dbFile, "db/" + dbFile.getName(), zos);
             }
@@ -114,8 +109,7 @@ public class BackupService {
         }
 
         // 恢复逻辑
-        String dbPath = dbUrl.replace("jdbc:sqlite:", "");
-        File dbFile = new File(dbPath);
+        File dbFile = appPaths.getDbDir().toFile();
         File restoredDb = new File(tempExtractDir.toFile(), "db/" + dbFile.getName());
 
         if (restoredDb.exists()) {
