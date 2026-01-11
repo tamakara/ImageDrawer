@@ -35,6 +35,9 @@ importers:
       pinia:
         specifier: ^2.1.7
         version: 2.3.1(typescript@5.9.3)(vue@3.5.26(typescript@5.9.3))
+      uuid:
+        specifier: ^13.0.0
+        version: 13.0.0
       vfonts:
         specifier: ^0.0.3
         version: 0.0.3
@@ -1036,6 +1039,10 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
+  uuid@13.0.0:
+    resolution: {integrity: sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w==}
+    hasBin: true
+
   vdirs@0.1.8:
     resolution: {integrity: sha512-H9V1zGRLQZg9b+GdMk8MXDN2Lva0zx72MPahDKc30v+DtwKjfyOSXWRIX4t2mhDubM1H09gPhWeth/BJWPHGUw==}
     peerDependencies:
@@ -1996,6 +2003,8 @@ snapshots:
       picocolors: 1.1.1
 
   util-deprecate@1.0.2: {}
+
+  uuid@13.0.0: {}
 
   vdirs@0.1.8(vue@3.5.26(typescript@5.9.3)):
     dependencies:

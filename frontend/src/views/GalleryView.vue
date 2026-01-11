@@ -2,7 +2,7 @@
 import {useQuery} from '@tanstack/vue-query'
 import {searchApi} from '../api/search'
 import {galleryApi} from '../api/gallery'
-import {computed, h, nextTick, reactive, ref} from 'vue'
+import {computed, h, nextTick, reactive, ref, watch} from 'vue'
 import {
   NButton,
   NDropdown,
@@ -26,8 +26,18 @@ import {
 } from 'naive-ui'
 import ImageDetail from '../components/business/ImageDetail.vue'
 import TagSearchInput from '../components/business/TagSearchInput.vue'
+import {breakpointsTailwind, useBreakpoints} from '@vueuse/core'
 import {CheckmarkCircle24Filled, Dismiss24Regular, Search24Regular} from '@vicons/fluent'
-import {Checkbox, CloseCircleOutline, DownloadOutline, EyeOutline, SquareOutline, TrashOutline} from '@vicons/ionicons5'
+import {
+  Checkbox,
+  CloseCircleOutline,
+  DownloadOutline,
+  EyeOutline,
+  FilterOutline,
+  SquareOutline,
+  TrashOutline
+} from '@vicons/ionicons5'
+import {v4 as uuidv4} from 'uuid';
 
 // 表单状态
 const formState = reactive({
@@ -37,10 +47,20 @@ const formState = reactive({
   sortDirection: 'DESC'
 })
 
+// 响应式布局控制
+const breakpoints = useBreakpoints(breakpointsTailwind)
+const isMobile = breakpoints.smaller('lg')
+const collapsed = ref(isMobile.value)
+
+watch(isMobile, (val) => {
+  collapsed.value = val
+})
+
 // 激活的搜索状态（点击搜索时应用）
 const activeSearchState = ref({
   ...formState,
-  randomSeed: crypto.randomUUID()
+  randomSeed:  uuidv4()
+
 })
 const page = ref(1)
 const pageSize = ref(20)
@@ -50,7 +70,7 @@ function handleSearch() {
   page.value = 1
   activeSearchState.value = {
     ...formState,
-    randomSeed: crypto.randomUUID()
+    randomSeed: uuidv4()
   }
 }
 
@@ -311,13 +331,16 @@ async function handleBatchDownload() {
         bordered
         collapse-mode="transform"
         :collapsed-width="0"
-        show-trigger="bar"
+        :collapsed="collapsed"
+        @update:collapsed="(v) => collapsed = v"
+        :show-trigger="isMobile ? false : 'bar'"
         :native-scrollbar="false"
-        class="z-10"
+        :class="isMobile ? 'z-50 absolute h-full shadow-xl' : 'z-10'"
+        :width="280"
     >
       <div class="flex flex-col h-full">
         <div class="p-4 border-b border-gray-100 dark:border-gray-800">
-          <h2 class="text-lg font-medium">搜索与筛选</h2>
+          <h2 class="text-lg font-medium">搜索</h2>
         </div>
 
         <div class="flex-1 overflow-y-auto p-4">
@@ -377,11 +400,13 @@ async function handleBatchDownload() {
       </div>
     </n-layout-sider>
 
+    <div v-if="isMobile && !collapsed" class="absolute inset-0 bg-black/50 z-40" @click="collapsed = true"></div>
+
     <n-layout class="h-full" content-style="display: flex; flex-direction: column; height: 100%;">
 
       <!-- 顶部功能栏 -->
       <n-layout-header bordered class="p-3 flex justify-between items-center transition-all" :class="isSelectionMode ? 'bg-primary-50 dark:bg-gray-800' : ''">
-        <div class="flex items-center gap-4" v-if="isSelectionMode">
+        <div v-if="isSelectionMode" class="flex items-center gap-4">
           <n-button circle secondary @click="clearSelection">
             <template #icon>
               <n-icon><CloseCircleOutline /></n-icon>
@@ -389,7 +414,13 @@ async function handleBatchDownload() {
           </n-button>
           <span class="text-base font-medium">已选中 {{ selectedIds.size }} 项</span>
         </div>
-        <div v-else></div>
+        <div v-else class="flex items-center">
+          <n-button quaternary circle @click="collapsed = !collapsed">
+            <template #icon>
+              <n-icon><FilterOutline /></n-icon>
+            </template>
+          </n-button>
+        </div>
         <div class="flex gap-2">
           <n-button secondary @click="toggleSelectAll">
             {{ isAllSelected ? '取消全选' : '全选' }}

@@ -1,37 +1,37 @@
 <script setup lang="ts">
-import {ref, computed, watch} from 'vue'
-import {
-  NModal,
-  NButton,
-  NIcon,
-  NInput,
-  NUpload,
-  NImage,
-  useMessage,
-  NPopconfirm,
-  NCheckbox,
-  NTag,
-  NDivider,
-  NTooltip,
-  NSelect,
-  NInputGroup
-} from 'naive-ui'
+import {computed, ref, watch} from 'vue'
 import type {UploadCustomRequestOptions} from 'naive-ui'
 import {
+  NButton,
+  NCheckbox,
+  NDivider,
+  NIcon,
+  NImage,
+  NInput,
+  NInputGroup,
+  NModal,
+  NPopconfirm,
+  NSelect,
+  NTag,
+  NTooltip,
+  NUpload,
+  useMessage
+} from 'naive-ui'
+import {
+  AddOutline,
   CloseOutline,
-  InformationCircleOutline,
   CloudUploadOutline,
-  TrashOutline,
-  DownloadOutline,
-  TimeOutline,
-  ResizeOutline,
   DocumentTextOutline,
-  ImageOutline,
+  DownloadOutline,
   HardwareChipOutline,
+  ImageOutline,
+  InformationCircleOutline,
+  PencilOutline,
   PricetagOutline,
   RefreshOutline,
-  AddOutline,
-  PencilOutline
+  ResizeOutline,
+  TimeOutline,
+  TrashOutline
 } from '@vicons/ionicons5'
 import {galleryApi, type ImageDto, type TagDto} from '../../api/gallery'
 import {useDateFormat} from '@vueuse/core'
