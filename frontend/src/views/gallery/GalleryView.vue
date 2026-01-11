@@ -44,7 +44,7 @@ import {
 const formState = reactive({
   keyword: '',
   tagSearch: '',
-  sortBy: 'createdAt',
+  sortBy: 'RANDOM',
   sortDirection: 'DESC'
 })
 
@@ -62,7 +62,7 @@ function handleSearch() {
 function handleReset() {
   formState.keyword = ''
   formState.tagSearch = ''
-  formState.sortBy = 'createdAt'
+  formState.sortBy = 'RANDOM'
   formState.sortDirection = 'DESC'
   handleSearch()
 }
@@ -96,6 +96,7 @@ function openDetail(image: any) {
 }
 
 const sortOptions = [
+  {label: '随机', value: 'RANDOM'},
   {label: '创建时间', value: 'createdAt'},
   {label: '修改时间', value: 'updatedAt'},
   {label: '文件大小', value: 'size'},

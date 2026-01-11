@@ -32,6 +32,11 @@ public class SearchService {
 
     @Transactional(readOnly = true)
     public Page<ImageDto> search(SearchRequestDto request, Pageable pageable) {
+        boolean isRandomSort = pageable.getSort().stream().anyMatch(o -> "RANDOM".equals(o.getProperty()));
+        Pageable effectivePageable = isRandomSort
+                ? org.springframework.data.domain.PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
+                : pageable;
+
         Specification<Image> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -92,9 +97,13 @@ public class SearchService {
                 ));
             }
 
+            if (isRandomSort && Long.class != query.getResultType()) {
+                query.orderBy(cb.asc(cb.function("RANDOM", Double.class)));
+            }
+
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        return imageRepository.findAll(spec, pageable).map(imageMapper::toDto);
+        return imageRepository.findAll(spec, effectivePageable).map(imageMapper::toDto);
     }
 }
