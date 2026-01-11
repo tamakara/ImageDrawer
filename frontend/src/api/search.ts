@@ -8,6 +8,7 @@ const apiClient = axios.create({
 export interface SearchRequestDto {
   tagSearch?: string
   keyword?: string
+  randomSeed?: string
 }
 
 export const searchApi = {

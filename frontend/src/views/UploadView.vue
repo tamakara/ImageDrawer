@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {h, ref} from 'vue'
 import {useMutation, useQuery, useQueryClient} from '@tanstack/vue-query'
-import {uploadApi, type UploadTask} from '../../api/upload'
+import {uploadApi, type UploadTask} from '../api/upload'
 import {
   NButton,
   NCard,

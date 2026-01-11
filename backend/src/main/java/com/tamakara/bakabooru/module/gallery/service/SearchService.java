@@ -1,27 +1,24 @@
 package com.tamakara.bakabooru.module.gallery.service;
 
 import com.tamakara.bakabooru.module.gallery.dto.ImageDto;
+import com.tamakara.bakabooru.module.gallery.dto.SearchRequestDto;
 import com.tamakara.bakabooru.module.gallery.entity.Image;
 import com.tamakara.bakabooru.module.gallery.mapper.ImageMapper;
 import com.tamakara.bakabooru.module.gallery.repository.ImageRepository;
-import com.tamakara.bakabooru.module.gallery.dto.SearchRequestDto;
 import com.tamakara.bakabooru.module.tags.entity.Tag;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.Subquery;
+import jakarta.persistence.criteria.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +31,7 @@ public class SearchService {
     public Page<ImageDto> search(SearchRequestDto request, Pageable pageable) {
         boolean isRandomSort = pageable.getSort().stream().anyMatch(o -> "RANDOM".equals(o.getProperty()));
         Pageable effectivePageable = isRandomSort
-                ? org.springframework.data.domain.PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
+                ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
                 : pageable;
 
         Specification<Image> spec = (root, query, cb) -> {
@@ -42,54 +39,20 @@ public class SearchService {
 
             Set<String> includedTags = new HashSet<>();
             Set<String> excludedTags = new HashSet<>();
-
-            // 解析标签搜索字符串
-            if (request.getTagSearch() != null && !request.getTagSearch().trim().isEmpty()) {
-                String[] tokens = request.getTagSearch().trim().split("\\s+");
-                for (String token : tokens) {
-                    if (token.startsWith("-") && token.length() > 1) {
-                        excludedTags.add(token.substring(1));
-                    } else if (!token.isEmpty()) {
-                        includedTags.add(token);
-                    }
-                }
-            }
+            parseTagSearch(request.getTagSearch(), includedTags, excludedTags);
 
             // 包含的标签 (AND)
-            if (!includedTags.isEmpty()) {
-                Subquery<Long> subquery = query.subquery(Long.class);
-                Root<Image> subRoot = subquery.from(Image.class);
-                Join<Image, Tag> subTags = subRoot.join("tags");
-
-                subquery.select(subRoot.get("id"));
-                subquery.where(
-                        cb.equal(subRoot.get("id"), root.get("id")),
-                        subTags.get("name").in(includedTags)
-                );
-                subquery.groupBy(subRoot.get("id"));
-                subquery.having(cb.equal(cb.countDistinct(subTags.get("id")), (long) includedTags.size()));
-
-                predicates.add(cb.exists(subquery));
+            for (String tag : includedTags) {
+                predicates.add(createTagExistsPredicate(cb, query, root, tag));
             }
 
             // 排除的标签 (NOT)
             if (!excludedTags.isEmpty()) {
-                Subquery<Long> subquery = query.subquery(Long.class);
-                Root<Image> subRoot = subquery.from(Image.class);
-                Join<Image, Tag> subTags = subRoot.join("tags");
-
-                subquery.select(subRoot.get("id"));
-                subquery.where(
-                        cb.equal(subRoot.get("id"), root.get("id")),
-                        subTags.get("name").in(excludedTags)
-                );
-
-                predicates.add(cb.not(cb.exists(subquery)));
+                predicates.add(cb.not(createTagInPredicate(cb, query, root, excludedTags)));
             }
 
-
             // 关键字搜索 (Title or FileName)
-            if (request.getKeyword() != null && !request.getKeyword().trim().isEmpty()) {
+            if (hasText(request.getKeyword())) {
                 String likePattern = "%" + request.getKeyword().trim().toLowerCase() + "%";
                 predicates.add(cb.or(
                         cb.like(cb.lower(root.get("title")), likePattern),
@@ -97,13 +60,67 @@ public class SearchService {
                 ));
             }
 
+            // 随机排序
             if (isRandomSort && Long.class != query.getResultType()) {
-                query.orderBy(cb.asc(cb.function("RANDOM", Double.class)));
+                if (hasText(request.getRandomSeed())) {
+                    // 使用确定性算法实现一致性随机: (id * seed) % MAX_INT
+                    long seedVal = request.getRandomSeed().hashCode();
+                    // 保证 seed 不为 0 且为正数，提升混淆效果
+                    long effectiveSeed = Math.abs(seedVal == 0 ? 0xADEAD1D5L : seedVal);
+                    // 简单的乘法哈希排序
+                    query.orderBy(cb.asc(
+                            cb.function("MOD", Integer.class,
+                                    cb.prod(root.get("id"), effectiveSeed),
+                                    cb.literal(Integer.MAX_VALUE)
+                            )
+                    ));
+                } else {
+                    query.orderBy(cb.asc(cb.function("RANDOM", Double.class)));
+                }
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
         return imageRepository.findAll(spec, effectivePageable).map(imageMapper::toDto);
+    }
+
+    private void parseTagSearch(String search, Set<String> included, Set<String> excluded) {
+        if (!hasText(search)) return;
+        for (String token : search.trim().split("\\s+")) {
+            if (token.startsWith("-") && token.length() > 1) {
+                excluded.add(token.substring(1));
+            } else if (!token.isEmpty()) {
+                included.add(token);
+            }
+        }
+    }
+
+    private Predicate createTagExistsPredicate(CriteriaBuilder cb, CriteriaQuery<?> query, Root<Image> root, String tag) {
+        Subquery<Long> subquery = query.subquery(Long.class);
+        Root<Image> subRoot = subquery.from(Image.class);
+        Join<Image, Tag> subTags = subRoot.join("tags");
+        subquery.select(subRoot.get("id"));
+        subquery.where(
+                cb.equal(subRoot.get("id"), root.get("id")),
+                cb.equal(subTags.get("name"), tag)
+        );
+        return cb.exists(subquery);
+    }
+
+    private Predicate createTagInPredicate(CriteriaBuilder cb, CriteriaQuery<?> query, Root<Image> root, Set<String> tags) {
+        Subquery<Long> subquery = query.subquery(Long.class);
+        Root<Image> subRoot = subquery.from(Image.class);
+        Join<Image, Tag> subTags = subRoot.join("tags");
+        subquery.select(subRoot.get("id"));
+        subquery.where(
+                cb.equal(subRoot.get("id"), root.get("id")),
+                subTags.get("name").in(tags)
+        );
+        return cb.exists(subquery);
+    }
+
+    private boolean hasText(String str) {
+        return str != null && !str.trim().isEmpty();
     }
 }

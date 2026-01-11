@@ -1,8 +1,20 @@
 <script setup lang="ts">
 import {ref, watch} from 'vue'
-import {useQuery, useMutation, useQueryClient} from '@tanstack/vue-query'
-import {systemApi} from '../../api/system'
-import {NCard, NButton, NInput, NForm, NFormItem, NSpace, useMessage, NUpload, NPopconfirm, NSelect, NDivider} from 'naive-ui'
+import {useMutation, useQuery, useQueryClient} from '@tanstack/vue-query'
+import {systemApi} from '../api/system'
+import {
+  NButton,
+  NCard,
+  NDivider,
+  NForm,
+  NFormItem,
+  NInput,
+  NPopconfirm,
+  NSelect,
+  NSpace,
+  NUpload,
+  useMessage
+} from 'naive-ui'
 
 const message = useMessage()
 const queryClient = useQueryClient()

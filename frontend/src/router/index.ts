@@ -10,17 +10,17 @@ const router = createRouter({
     {
       path: '/gallery',
       name: 'gallery',
-      component: () => import('../views/gallery/GalleryView.vue')
+      component: () => import('../views/GalleryView.vue')
     },
     {
       path: '/upload',
       name: 'upload',
-      component: () => import('../views/upload/UploadView.vue')
+      component: () => import('../views/UploadView.vue')
     },
     {
       path: '/settings',
       name: 'settings',
-      component: () => import('../views/settings/SettingsView.vue')
+      component: () => import('../views/SettingsView.vue')
     }
   ]
 })

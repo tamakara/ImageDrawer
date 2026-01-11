@@ -1,44 +1,33 @@
 <script setup lang="ts">
 import {useQuery} from '@tanstack/vue-query'
-import {searchApi} from '../../api/search'
-import {galleryApi} from '../../api/gallery'
-import {computed, ref, reactive} from 'vue'
+import {searchApi} from '../api/search'
+import {galleryApi} from '../api/gallery'
+import {computed, h, nextTick, reactive, ref} from 'vue'
 import {
-  NSpin,
-  NEmpty,
-  NSelect,
-  NInput,
   NButton,
+  NDropdown,
+  NEmpty,
   NForm,
   NFormItem,
-  NSpace,
-  NRadioGroup,
-  NRadioButton,
   NIcon,
+  NInput,
   NLayout,
-  NLayoutSider,
   NLayoutContent,
   NLayoutFooter,
+  NLayoutSider,
   NPagination,
-  NDropdown,
-  useMessage,
-  useDialog
+  NRadioButton,
+  NRadioGroup,
+  NSelect,
+  NSpace,
+  NSpin,
+  useDialog,
+  useMessage
 } from 'naive-ui'
-import ImageDetail from '../../components/business/ImageDetail.vue'
-import TagSearchInput from '../../components/business/TagSearchInput.vue'
-import {
-  Search24Regular,
-  Dismiss24Regular,
-  CheckmarkCircle24Filled
-} from '@vicons/fluent'
-import {
-  DownloadOutline,
-  TrashOutline,
-  EyeOutline,
-  CloseCircleOutline,
-  SquareOutline,
-  Checkbox
-} from '@vicons/ionicons5'
+import ImageDetail from '../components/business/ImageDetail.vue'
+import TagSearchInput from '../components/business/TagSearchInput.vue'
+import {CheckmarkCircle24Filled, Dismiss24Regular, Search24Regular} from '@vicons/fluent'
+import {Checkbox, CloseCircleOutline, DownloadOutline, EyeOutline, SquareOutline, TrashOutline} from '@vicons/ionicons5'
 
 // 表单状态
 const formState = reactive({
@@ -49,14 +38,20 @@ const formState = reactive({
 })
 
 // 激活的搜索状态（点击搜索时应用）
-const activeSearchState = ref({...formState})
+const activeSearchState = ref({
+  ...formState,
+  randomSeed: crypto.randomUUID()
+})
 const page = ref(1)
 const pageSize = ref(20)
 
 // 搜索操作
 function handleSearch() {
   page.value = 1
-  activeSearchState.value = {...formState}
+  activeSearchState.value = {
+    ...formState,
+    randomSeed: crypto.randomUUID()
+  }
 }
 
 function handleReset() {
@@ -78,7 +73,8 @@ const {
     const sort = `${activeSearchState.value.sortBy},${activeSearchState.value.sortDirection}`
     return searchApi.search({
       keyword: activeSearchState.value.keyword,
-      tagSearch: activeSearchState.value.tagSearch
+      tagSearch: activeSearchState.value.tagSearch,
+      randomSeed: activeSearchState.value.randomSeed
     }, page.value - 1, pageSize.value, sort)
   }
 })
@@ -234,8 +230,6 @@ function renderIcon(icon: any) {
   return () => h(NIcon, null, {default: () => h(icon)})
 }
 
-import {h, nextTick} from 'vue'
-
 const message = useMessage()
 const dialog = useDialog()
 
@@ -379,24 +373,6 @@ async function handleBatchDownload() {
             重置
           </n-button>
         </div>
-
-        <!-- 批量操作栏 - 已移除，移动到顶部功能栏 -->
-        <!-- <div v-if="isSelectionMode" class="p-4 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-2">
-            <div class="flex justify-between items-center mb-1">
-                <span class="text-sm font-medium">已选中 {{ selectedIds.size }} 项</span>
-                <n-button text size="tiny" type="primary" @click="clearSelection">取消</n-button>
-            </div>
-            <div class="flex gap-2">
-                 <n-button type="info" secondary class="flex-1" @click="handleBatchDownload" size="small">
-                    <template #icon><n-icon><DownloadOutline/></n-icon></template>
-                    下载
-                 </n-button>
-                 <n-button type="error" secondary class="flex-1" @click="handleBatchDelete" size="small">
-                    <template #icon><n-icon><TrashOutline/></n-icon></template>
-                    删除
-                 </n-button>
-            </div>
-        </div> -->
 
       </div>
     </n-layout-sider>

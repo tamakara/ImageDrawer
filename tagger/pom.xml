@@ -92,6 +92,9 @@
                         <fileset>
                             <directory>target</directory>
                         </fileset>
+                        <fileset>
+                            <directory>../launcher/tagger</directory>
+                        </fileset>
                     </filesets>
                 </configuration>
             </plugin>
