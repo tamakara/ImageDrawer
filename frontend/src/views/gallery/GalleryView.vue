@@ -332,7 +332,7 @@ async function handleBatchDownload() {
                   v-model:value="formState.keyword"
                   placeholder="标题或文件名"
                   type="textarea"
-                  :autosize="{ minRows:2, maxRows:2 }"
+                  :autosize="{ minRows:1, maxRows:1 }"
                   @keydown.enter="handleSearch"/>
             </n-form-item>
 
@@ -340,6 +340,7 @@ async function handleBatchDownload() {
               <tag-search-input
                   v-model:value="formState.tagSearch"
                   placeholder="输入标签，空格分隔，-排除"
+                  :autosize="{minRows:2, maxRows:5}"
                   @search="handleSearch"
               />
             </n-form-item>
@@ -481,7 +482,6 @@ async function handleBatchDownload() {
           <n-pagination
               v-model:page="page"
               v-model:page-size="pageSize"
-
               :item-count="totalCount"
               :page-sizes="[10, 20, 50, 100]"
               :display-order="['size-picker','pages', 'quick-jumper']"

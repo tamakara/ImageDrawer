@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { NAutoComplete, NInput, type AutoCompleteOption } from 'naive-ui'
-import { tagsApi } from '../../api/tags'
+import {ref} from 'vue'
+import {NAutoComplete, NInput, type AutoCompleteOption} from 'naive-ui'
+import {tagsApi} from '../../api/tags'
 
 const props = defineProps<{
   value: string
-  placeholder:string
+  placeholder: string
+  autosize: boolean | {
+    minRows?: number;
+    maxRows?: number;
+  };
 }>()
 
 const emit = defineEmits<{
@@ -96,24 +100,24 @@ function handleEnter(e: KeyboardEvent) {
 
 <template>
   <n-auto-complete
-    :value="props.value"
-    :options="tagOptions"
-    :placeholder="placeholder"
-    :get-show="() => true"
-    :append="true"
-    @update:value="handleUpdateValue"
-    @select="handleSelect"
+      :value="props.value"
+      :options="tagOptions"
+      :placeholder="placeholder"
+      :get-show="() => true"
+      :append="true"
+      @update:value="handleUpdateValue"
+      @select="handleSelect"
   >
     <template #default="{ handleInput, handleBlur, handleFocus, value }">
       <n-input
-        type="textarea"
-        :value="value"
-        :placeholder="placeholder"
-        :autosize="{ minRows:10, maxRows:10 }"
-        @input="handleInput"
-        @focus="handleFocus"
-        @blur="handleBlur"
-        @keydown.enter="handleEnter"
+          type="textarea"
+          :value="value"
+          :placeholder="placeholder"
+          :autosize="autosize"
+          @input="handleInput"
+          @focus="handleFocus"
+          @blur="handleBlur"
+          @keydown.enter="handleEnter"
       />
     </template>
   </n-auto-complete>
