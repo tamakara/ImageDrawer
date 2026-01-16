@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {ref} from 'vue'
 import {NAutoComplete, NInput, type AutoCompleteOption} from 'naive-ui'
-import {tagsApi} from '../../api/tags'
+import {tagsApi} from '../../api/tags.ts'
 
 const props = defineProps<{
   value: string

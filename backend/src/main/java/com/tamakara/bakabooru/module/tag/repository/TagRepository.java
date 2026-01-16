@@ -1,6 +1,6 @@
-package com.tamakara.bakabooru.module.tags.repository;
+package com.tamakara.bakabooru.module.tag.repository;
 
-import com.tamakara.bakabooru.module.tags.entity.Tag;
+import com.tamakara.bakabooru.module.tag.entity.Tag;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

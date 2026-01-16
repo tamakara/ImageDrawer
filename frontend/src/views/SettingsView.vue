@@ -28,6 +28,8 @@ const {data: settings} = useQuery({
 const settingsForm = ref<Record<string, string>>({
   'upload.max-file-size': '',
   'upload.allowed-extensions': '',
+  'upload.concurrency': '3',
+  'upload.poll-interval': '1000',
   'thumbnail.quality': '',
   'thumbnail.max-size': '800',
   'tagger.threshold': '0.6',
@@ -125,6 +127,12 @@ const resetSystemMutation = useMutation({
         </n-form-item>
         <n-form-item label="允许的扩展名 (逗号分隔)">
           <n-input v-model:value="settingsForm['upload.allowed-extensions']"/>
+        </n-form-item>
+        <n-form-item label="最大同时上传数量">
+          <n-input v-model:value="settingsForm['upload.concurrency']" placeholder="3"/>
+        </n-form-item>
+        <n-form-item label="任务列表轮询间隔 (ms)">
+          <n-input v-model:value="settingsForm['upload.poll-interval']" placeholder="1000"/>
         </n-form-item>
         <n-form-item label="缩略图质量 (1-100)">
           <n-input v-model:value="settingsForm['thumbnail.quality']" placeholder="80"/>

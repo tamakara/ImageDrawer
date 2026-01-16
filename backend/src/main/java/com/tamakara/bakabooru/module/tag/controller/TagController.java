@@ -1,7 +1,7 @@
-package com.tamakara.bakabooru.module.tags.controller;
+package com.tamakara.bakabooru.module.tag.controller;
 
-import com.tamakara.bakabooru.module.tags.dto.TagDto;
-import com.tamakara.bakabooru.module.tags.service.TagService;
+import com.tamakara.bakabooru.module.tag.dto.TagDto;
+import com.tamakara.bakabooru.module.tag.service.TagService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

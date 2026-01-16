@@ -33,7 +33,7 @@ import {
   TimeOutline,
   TrashOutline
 } from '@vicons/ionicons5'
-import {galleryApi, type ImageDto, type TagDto} from '../../api/gallery'
+import {galleryApi, type ImageDto, type TagDto} from '../../api/gallery.ts'
 import {useDateFormat} from '@vueuse/core'
 
 const props = defineProps<{

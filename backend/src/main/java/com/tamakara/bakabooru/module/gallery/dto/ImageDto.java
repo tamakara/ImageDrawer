@@ -1,6 +1,6 @@
 package com.tamakara.bakabooru.module.gallery.dto;
 
-import com.tamakara.bakabooru.module.tags.dto.TagDto;
+import com.tamakara.bakabooru.module.tag.dto.TagDto;
 import lombok.Data;
 
 import java.time.LocalDateTime;

@@ -3,10 +3,10 @@ package com.tamakara.bakabooru.module.upload.service;
 import com.tamakara.bakabooru.module.file.service.StorageService;
 import com.tamakara.bakabooru.module.gallery.entity.Image;
 import com.tamakara.bakabooru.module.gallery.repository.ImageRepository;
-import com.tamakara.bakabooru.module.tags.entity.Tag;
-import com.tamakara.bakabooru.module.tags.repository.TagRepository;
+import com.tamakara.bakabooru.module.tag.entity.Tag;
+import com.tamakara.bakabooru.module.tag.repository.TagRepository;
 import com.tamakara.bakabooru.module.system.service.SystemSettingService;
-import com.tamakara.bakabooru.module.tags.service.TaggerService;
+import com.tamakara.bakabooru.module.tag.service.TaggerService;
 import com.tamakara.bakabooru.module.upload.model.UploadTask;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -94,7 +94,9 @@ public class UploadQueueService {
     }
 
     public List<UploadTask> getAllTasks() {
-        return new ArrayList<>(taskMap.values());
+        List<UploadTask> tasks = new ArrayList<>(taskMap.values());
+        tasks.sort(Comparator.comparing(UploadTask::getCreatedAt).reversed());
+        return tasks;
     }
 
     public UploadTask getTask(String id) {
@@ -106,7 +108,7 @@ public class UploadQueueService {
     }
 
     public void clearTasks() {
-        taskMap.clear();
+        taskMap.values().removeIf(task -> task.getStatus() == UploadTask.UploadStatus.COMPLETED || task.getStatus() == UploadTask.UploadStatus.FAILED);
     }
 
     @Async

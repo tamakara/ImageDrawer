@@ -1,5 +1,6 @@
 package com.tamakara.bakabooru;
 
+import de.codecentric.boot.admin.server.config.EnableAdminServer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
@@ -11,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@EnableAdminServer
 @SpringBootApplication
 @EnableJpaAuditing
 public class BaKaBooruApplication {

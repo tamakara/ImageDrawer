@@ -1,4 +1,4 @@
-package com.tamakara.bakabooru.module.tags.dto;
+package com.tamakara.bakabooru.module.tag.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;

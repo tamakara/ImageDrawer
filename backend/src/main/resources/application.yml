@@ -2,6 +2,12 @@ spring:
   application:
     name: bakabooru
 
+  boot:
+    admin:
+      client:
+        url: http://localhost:8080/admin
+      context-path: /admin
+
   datasource:
     url: jdbc:sqlite:${app.data-dir}/db/data.sqlite
     driver-class-name: org.sqlite.JDBC
@@ -25,6 +31,15 @@ spring:
 server:
   address: 0.0.0.0
   port: 8080
+  servlet:
+    context-path: /
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: "*"
 
 app:
   data-dir: data

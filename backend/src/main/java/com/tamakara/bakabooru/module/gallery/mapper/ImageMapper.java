@@ -2,7 +2,7 @@ package com.tamakara.bakabooru.module.gallery.mapper;
 
 import com.tamakara.bakabooru.module.gallery.dto.ImageDto;
 import com.tamakara.bakabooru.module.gallery.entity.Image;
-import com.tamakara.bakabooru.module.tags.mapper.TagMapper;
+import com.tamakara.bakabooru.module.tag.mapper.TagMapper;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;

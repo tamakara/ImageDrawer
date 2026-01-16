@@ -24,8 +24,8 @@ import {
   useDialog,
   useMessage
 } from 'naive-ui'
-import ImageDetail from '../components/business/ImageDetail.vue'
-import TagSearchInput from '../components/business/TagSearchInput.vue'
+import ImageDetail from '../components/gallery/ImageDetail.vue'
+import TagSearchInput from '../components/gallery/TagSearchInput.vue'
 import {breakpointsTailwind, useBreakpoints} from '@vueuse/core'
 import {CheckmarkCircle24Filled, Dismiss24Regular, Search24Regular} from '@vicons/fluent'
 import {

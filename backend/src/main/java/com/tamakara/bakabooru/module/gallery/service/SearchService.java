@@ -5,7 +5,7 @@ import com.tamakara.bakabooru.module.gallery.dto.SearchRequestDto;
 import com.tamakara.bakabooru.module.gallery.entity.Image;
 import com.tamakara.bakabooru.module.gallery.mapper.ImageMapper;
 import com.tamakara.bakabooru.module.gallery.repository.ImageRepository;
-import com.tamakara.bakabooru.module.tags.entity.Tag;
+import com.tamakara.bakabooru.module.tag.entity.Tag;
 import jakarta.persistence.criteria.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

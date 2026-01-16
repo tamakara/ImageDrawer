@@ -1,73 +1,58 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-
-export type UploadStatus = 'pending' | 'uploading' | 'queued' | 'tagging' | 'saving' | 'completed' | 'error'
-
-export interface UploadTask {
-  id: string
-  file: File
-  status: UploadStatus
-  progress: number
-  thumbnailUrl?: string
-  error?: string
-  tags?: any[]
-}
+import {defineStore} from 'pinia'
+import {ref} from 'vue'
+import PQueue from 'p-queue'
+import {useQuery} from '@tanstack/vue-query'
+import {uploadApi} from '../api/upload'
+import {systemApi} from '../api/system'
 
 export const useQueueStore = defineStore('queue', () => {
-  const tasks = ref<UploadTask[]>([])
+  // 获取系统设置
+  const {data: settings} = useQuery({
+    queryKey: ['settings'],
+    queryFn: systemApi.getSettings
+  })
 
-  const pendingTasks = computed(() => tasks.value.filter(t => t.status === 'pending'))
-  const activeTasks = computed(() => tasks.value.filter(t => ['uploading', 'queued', 'tagging', 'saving'].includes(t.status)))
-  const completedTasks = computed(() => tasks.value.filter(t => t.status === 'completed'))
-  const errorTasks = computed(() => tasks.value.filter(t => t.status === 'error'))
+  // 最大同时上传数量
+  const concurrency = parseInt(settings.value?.['upload.concurrency'] ?? '3')
 
-  function addTask(file: File) {
-    const task: UploadTask = {
-      id: crypto.randomUUID(),
-      file,
-      status: 'pending',
-      progress: 0,
-      thumbnailUrl: URL.createObjectURL(file)
-    }
-    tasks.value.push(task)
-    return task
+  // 上传队列
+  const queue = new PQueue({concurrency})
+
+  // 队列统计
+  const waitingCount = ref(0)
+  const processingCount = ref(0)
+
+  // 更新统计数据
+  const updateStats = () => {
+    waitingCount.value = queue.size
+    processingCount.value = queue.pending
   }
 
-  function updateTaskStatus(id: string, status: UploadStatus, progress?: number) {
-    const task = tasks.value.find(t => t.id === id)
-    if (task) {
-      task.status = status
-      if (progress !== undefined) {
-        task.progress = progress
+  // 监听队列事件
+  queue.on('add', updateStats)
+  queue.on('next', updateStats)
+  queue.on('idle', updateStats)
+  queue.on('active', updateStats) // 当任务开始处理时触发
+
+  // 添加文件到上传队列
+  const addFileToQueue = async (file: File, enableTagging: boolean) => {
+    await queue.add(async () => {
+      updateStats() // 确保状态更新
+      try {
+        await uploadApi.uploadFile(file, enableTagging)
+      } catch (error) {
+        console.error(`Upload failed for ${file.name}:`, error)
+        // 这里可以扩展添加客户端错误通知
+      } finally {
+        updateStats()
       }
-    }
-  }
-
-  function removeTask(id: string) {
-    const index = tasks.value.findIndex(t => t.id === id)
-    if (index !== -1) {
-      const task = tasks.value[index]
-      if (task && task.thumbnailUrl) {
-        URL.revokeObjectURL(task.thumbnailUrl)
-      }
-      tasks.value.splice(index, 1)
-    }
-  }
-
-  function clearCompleted() {
-    tasks.value = tasks.value.filter(t => t.status !== 'completed')
+    })
+    updateStats()
   }
 
   return {
-    tasks,
-    pendingTasks,
-    activeTasks,
-    completedTasks,
-    errorTasks,
-    addTask,
-    updateTaskStatus,
-    removeTask,
-    clearCompleted
+    waitingCount,
+    processingCount,
+    addFileToQueue
   }
 })
-

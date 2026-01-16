@@ -1,6 +1,6 @@
 package com.tamakara.bakabooru.module.gallery.entity;
 
-import com.tamakara.bakabooru.module.tags.entity.Tag;
+import com.tamakara.bakabooru.module.tag.entity.Tag;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

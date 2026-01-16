@@ -1,8 +1,8 @@
-package com.tamakara.bakabooru.module.tags.service;
+package com.tamakara.bakabooru.module.tag.service;
 
 import com.tamakara.bakabooru.module.system.service.SystemSettingService;
-import com.tamakara.bakabooru.module.tags.dto.TaggerRequestDto;
-import com.tamakara.bakabooru.module.tags.dto.TaggerResponseDto;
+import com.tamakara.bakabooru.module.tag.dto.TaggerRequestDto;
+import com.tamakara.bakabooru.module.tag.dto.TaggerResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;

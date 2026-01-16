@@ -1,9 +1,9 @@
-package com.tamakara.bakabooru.module.tags.service;
+package com.tamakara.bakabooru.module.tag.service;
 
-import com.tamakara.bakabooru.module.tags.dto.TagDto;
-import com.tamakara.bakabooru.module.tags.entity.Tag;
-import com.tamakara.bakabooru.module.tags.mapper.TagMapper;
-import com.tamakara.bakabooru.module.tags.repository.TagRepository;
+import com.tamakara.bakabooru.module.tag.dto.TagDto;
+import com.tamakara.bakabooru.module.tag.entity.Tag;
+import com.tamakara.bakabooru.module.tag.mapper.TagMapper;
+import com.tamakara.bakabooru.module.tag.repository.TagRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

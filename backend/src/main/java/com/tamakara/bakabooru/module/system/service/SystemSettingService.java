@@ -31,6 +31,8 @@ public class SystemSettingService {
         Map<String, String> defaults = new HashMap<>();
         defaults.put("upload.max-file-size", "5242880");
         defaults.put("upload.allowed-extensions", "jpg,png,webp,gif,jpeg");
+        defaults.put("upload.concurrency", "3");
+        defaults.put("upload.poll-interval", "1000");
         defaults.put("thumbnail.quality", "80");
         defaults.put("thumbnail.max-size", "800");
         defaults.put("tagger.threshold", "0.6");
