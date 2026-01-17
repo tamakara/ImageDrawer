@@ -7,10 +7,14 @@ import {
   Image24Regular as GalleryIcon,
   ArrowUpload24Regular as UploadIcon,
   Settings24Regular as SettingsIcon,
-  Navigation24Regular as MenuIcon
+  Navigation24Regular as MenuIcon,
+  WeatherMoon24Regular as MoonIcon,
+  WeatherSunny24Regular as SunIcon
 } from '@vicons/fluent'
+import { useThemeStore } from '../../stores/theme'
 
 const route = useRoute()
+const themeStore = useThemeStore()
 
 function renderIcon(icon: any) {
   return () => h(NIcon, null, { default: () => h(icon) })
@@ -48,8 +52,26 @@ const menuOptions: MenuOption[] = [
           :value="String(route.name)"
           responsive
         />
+        <div class="flex items-center ml-4">
+          <n-button circle quaternary @click="themeStore.toggleTheme">
+            <template #icon>
+              <n-icon>
+                <MoonIcon v-if="themeStore.isDark" />
+                <SunIcon v-else />
+              </n-icon>
+            </template>
+          </n-button>
+        </div>
       </div>
-      <div class="sm:hidden">
+      <div class="sm:hidden flex items-center gap-2">
+        <n-button circle quaternary @click="themeStore.toggleTheme">
+          <template #icon>
+            <n-icon>
+              <MoonIcon v-if="themeStore.isDark" />
+              <SunIcon v-else />
+            </n-icon>
+          </template>
+        </n-button>
         <n-dropdown trigger="click" :options="menuOptions">
           <n-button text style="font-size: 24px">
             <n-icon>

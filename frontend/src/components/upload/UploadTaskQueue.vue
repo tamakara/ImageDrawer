@@ -10,7 +10,7 @@ import {
   NDataTable,
   NIcon,
   NStatistic,
-  NSwitch,
+  NCheckbox,
   NTag,
   type DataTableColumns,
   useMessage
@@ -136,10 +136,9 @@ const columns: DataTableColumns<UploadTask> = [
   <n-card title="上传任务" class="flex-1 overflow-hidden flex flex-col">
     <template #header-extra>
       <div class="flex items-center gap-4">
-        <n-switch v-model:value="showFailedOnly">
-          <template #checked>失败任务</template>
-          <template #unchecked>所有任务</template>
-        </n-switch>
+        <n-checkbox v-model:checked="showFailedOnly">
+          失败任务
+        </n-checkbox>
         <n-button  @click="clearTasks()">
           清空全部
         </n-button>
