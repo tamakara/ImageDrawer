@@ -49,12 +49,6 @@
       <artifactId>hibernate-community-dialects</artifactId>
     </dependency>
 
-    <!-- Flyway -->
-    <dependency>
-      <groupId>org.flywaydb</groupId>
-      <artifactId>flyway-core</artifactId>
-    </dependency>
-
     <!-- MapStruct -->
     <dependency>
       <groupId>org.mapstruct</groupId>

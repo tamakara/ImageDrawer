@@ -8,9 +8,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class AuthInterceptor implements HandlerInterceptor {
+
+    private static final List<String> WHITELIST = List.of(
+            "/api/auth/login",
+            "/api/auth/status",
+            "/api/auth/setup",
+            "/api/file"
+    );
 
     private final AuthService authService;
 
@@ -20,7 +29,8 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         String path = request.getRequestURI();
 
-        if (path.startsWith("/api/auth/login") || path.startsWith("/api/auth/status") || path.startsWith("/api/auth/setup")) return true;
+        if (WHITELIST.stream().anyMatch(path::startsWith))
+            return true;
 
         String token = request.getHeader("Authorization");
         if (StringUtils.hasText(token) && token.startsWith("Bearer ")) {
@@ -47,4 +57,3 @@ public class AuthInterceptor implements HandlerInterceptor {
         return true;
     }
 }
-

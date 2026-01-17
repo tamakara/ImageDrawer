@@ -1,4 +1,3 @@
--- Create Tags table
 CREATE TABLE tags
 (
     id   INTEGER PRIMARY KEY,
@@ -6,7 +5,6 @@ CREATE TABLE tags
     type TEXT
 );
 
--- Create Images table
 CREATE TABLE images
 (
     id         INTEGER PRIMARY KEY,
@@ -21,7 +19,6 @@ CREATE TABLE images
     updated_at TIMESTAMP
 );
 
--- Create Image-Tags join table
 CREATE TABLE image_tags
 (
     image_id INTEGER NOT NULL,
@@ -31,15 +28,18 @@ CREATE TABLE image_tags
     FOREIGN KEY (tag_id) REFERENCES tags (id) ON DELETE CASCADE
 );
 
--- Create System Settings table
+CREATE TABLE tagger_settings
+(
+    setting_key   TEXT PRIMARY KEY,
+    setting_value TEXT
+);
+
 CREATE TABLE system_settings
 (
     setting_key   TEXT PRIMARY KEY,
     setting_value TEXT
 );
 
--- Create indexes for better search performance
 CREATE INDEX idx_tags_name ON tags (name);
 CREATE INDEX idx_images_hash ON images (hash);
 CREATE INDEX idx_images_created_at ON images (created_at);
-CREATE INDEX idx_image_tags_tag_id ON image_tags (tag_id, image_id);

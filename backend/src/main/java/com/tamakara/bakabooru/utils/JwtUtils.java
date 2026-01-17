@@ -6,15 +6,15 @@ import io.jsonwebtoken.security.Keys;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Date;
-import java.util.Map;
 
 public class JwtUtils {
 
     // 生成 SecretKey
     public static SecretKey generateSecretKey(String password) {
         try {
-            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] keyBytes = digest.digest(password.getBytes(StandardCharsets.UTF_8));
             return Keys.hmacShaKeyFor(keyBytes);
         } catch (java.security.NoSuchAlgorithmException e) {

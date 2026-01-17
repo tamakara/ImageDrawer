@@ -1,7 +1,6 @@
 import apiClient from './client'
 import type { Page, ImageDto } from './gallery'
 
-
 export interface SearchRequestDto {
   tagSearch?: string
   keyword?: string

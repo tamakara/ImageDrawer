@@ -16,13 +16,8 @@ public class AuthService {
 
     private final SystemSettingService systemSettingService;
 
-    private String encodedPasswordCache = null;
-
     public String getEncodedPassword() {
-        if (encodedPasswordCache == null) {
-            encodedPasswordCache = systemSettingService.getSetting("auth.password", "");
-        }
-        return encodedPasswordCache;
+        return systemSettingService.getSetting("auth.password", "");
     }
 
     public boolean isPasswordSet() {
