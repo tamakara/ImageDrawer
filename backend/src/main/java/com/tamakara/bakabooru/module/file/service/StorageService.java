@@ -1,7 +1,6 @@
 package com.tamakara.bakabooru.module.file.service;
 
 import com.tamakara.bakabooru.config.AppPaths;
-import com.tamakara.bakabooru.module.file.utils.FileUtils;
 import lombok.RequiredArgsConstructor;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.stereotype.Service;
@@ -14,7 +13,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.stream.Stream;
 
-
 @Service
 @RequiredArgsConstructor
 public class StorageService {
@@ -24,19 +22,17 @@ public class StorageService {
     public void storePendingImage(String taskId, MultipartFile file) {
         try {
             if (file.isEmpty()) {
-                throw new RuntimeException("文件为空");
+                throw new RuntimeException("文件为空.");
             }
-
             // 待处理文件路径
             Path pendingFile = appPaths.getPendingDir().resolve(taskId).normalize().toAbsolutePath();
-
             // 存储文件
             try (InputStream inputStream = file.getInputStream()) {
                 Files.copy(inputStream, pendingFile, StandardCopyOption.REPLACE_EXISTING);
             }
 
         } catch (IOException e) {
-            throw new RuntimeException("待处理文件存储失败。", e);
+            throw new RuntimeException("待处理文件存储失败.", e);
         }
     }
 
@@ -46,8 +42,12 @@ public class StorageService {
             Path destinationFile = appPaths.getImageDir().resolve(hash).normalize().toAbsolutePath();
             Files.copy(pendingFile, destinationFile);
         } catch (Exception e) {
-            throw new RuntimeException("图片复制失败.", e);
+            throw new RuntimeException("图片加密失败.", e);
         }
+    }
+
+    public Path getFilePath(String hash) {
+        return appPaths.getImageDir().resolve(hash);
     }
 
     public Path getThumbnailPath(String hash, int quality, int maxSize) {
@@ -67,7 +67,7 @@ public class StorageService {
 
             return target;
         } catch (IOException e) {
-            throw new RuntimeException("Failed to generate thumbnail", e);
+            throw new RuntimeException("生成缩略图失败.", e);
         }
     }
 
@@ -84,13 +84,7 @@ public class StorageService {
                         }
                     });
         } catch (IOException e) {
-            throw new RuntimeException("Failed to clear files", e);
+            throw new RuntimeException("清除缓存失败.", e);
         }
     }
-
-    public Path getFilePath(String hash) {
-        return appPaths.getImageDir().resolve(hash);
-    }
-
-
 }

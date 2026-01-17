@@ -2,6 +2,7 @@
 import {ref, watch} from 'vue'
 import {useMutation, useQuery, useQueryClient} from '@tanstack/vue-query'
 import {systemApi} from '../api/system'
+import {authApi} from '../api/auth'
 import {
   NButton,
   NCard,
@@ -30,16 +31,15 @@ const settingsForm = ref<Record<string, string>>({
   'upload.allowed-extensions': '',
   'upload.concurrency': '3',
   'upload.poll-interval': '1000',
-  'thumbnail.quality': '',
-  'thumbnail.max-size': '800',
+  'file.thumbnail.quality': '80',
+  'file.thumbnail.max-size': '800',
   'tagger.threshold': '0.6',
-  'tagger.minConfidence': '0.1',
-  'tagger.category_thresholds.artist': '',
-  'tagger.category_thresholds.character': '',
-  'tagger.category_thresholds.copyright': '',
-  'tagger.category_thresholds.general': '',
-  'tagger.category_thresholds.meta': '',
-  'tagger.category_thresholds.rating': ''
+  'tagger.category-thresholds.artist': '',
+  'tagger.category-thresholds.character': '',
+  'tagger.category-thresholds.copyright': '',
+  'tagger.category-thresholds.general': '',
+  'tagger.category-thresholds.meta': '',
+  'tagger.category-thresholds.rating': ''
 })
 
 const thumbnailSizeOptions = [
@@ -103,6 +103,32 @@ const restoreMutation = useMutation({
   }
 })
 
+// --- Password ---
+const passwordForm = ref({
+  password: '',
+  confirmPassword: ''
+})
+
+const updatePasswordMutation = useMutation({
+  mutationFn: authApi.updatePassword,
+  onSuccess: () => {
+    message.success('密码已更新')
+    passwordForm.value.password = ''
+    passwordForm.value.confirmPassword = ''
+  },
+  onError: () => {
+    message.error('更新密码失败')
+  }
+})
+
+function handleUpdatePassword() {
+  if (passwordForm.value.password !== passwordForm.value.confirmPassword) {
+    message.error('两次输入的密码不一致')
+    return
+  }
+  updatePasswordMutation.mutate(passwordForm.value.password)
+}
+
 const resetSystemMutation = useMutation({
   mutationFn: systemApi.resetSystem,
   onSuccess: () => {
@@ -122,6 +148,8 @@ const resetSystemMutation = useMutation({
     <!-- System Settings -->
     <n-card title="系统设置">
       <n-form>
+        <n-divider title-placement="left">Upload 设置</n-divider>
+
         <n-form-item label="最大上传大小 (MB)">
           <n-input v-model:value="settingsForm['upload.max-file-size']"/>
         </n-form-item>
@@ -135,41 +163,36 @@ const resetSystemMutation = useMutation({
           <n-input v-model:value="settingsForm['upload.poll-interval']" placeholder="1000"/>
         </n-form-item>
         <n-form-item label="缩略图质量 (1-100)">
-          <n-input v-model:value="settingsForm['thumbnail.quality']" placeholder="80"/>
+          <n-input v-model:value="settingsForm['file.thumbnail.quality']" placeholder="80"/>
         </n-form-item>
         <n-form-item label="缩略图最大分辨率">
-          <n-select v-model:value="settingsForm['thumbnail.max-size']" :options="thumbnailSizeOptions" />
+          <n-select v-model:value="settingsForm['file.thumbnail.max-size']" :options="thumbnailSizeOptions" />
         </n-form-item>
 
         <n-divider title-placement="left">Tagger 设置</n-divider>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <n-form-item label="阈值 (Threshold)">
-            <n-input v-model:value="settingsForm['tagger.threshold']" placeholder="0.6"/>
-          </n-form-item>
-          <n-form-item label="最小置信度 (Min Confidence)">
-            <n-input v-model:value="settingsForm['tagger.minConfidence']" placeholder="0.1"/>
-          </n-form-item>
-        </div>
+        <n-form-item label="Threshold">
+          <n-input v-model:value="settingsForm['tagger.threshold']" placeholder="0.61"/>
+        </n-form-item>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <n-form-item label="Artist Threshold">
-            <n-input v-model:value="settingsForm['tagger.category_thresholds.artist']" placeholder="Default"/>
+          <n-form-item label="Artist 阈值">
+            <n-input v-model:value="settingsForm['tagger.category-thresholds.artist']" placeholder="Default"/>
           </n-form-item>
           <n-form-item label="Character Threshold">
-            <n-input v-model:value="settingsForm['tagger.category_thresholds.character']" placeholder="Default"/>
+            <n-input v-model:value="settingsForm['tagger.category-thresholds.character']" placeholder="Default"/>
           </n-form-item>
           <n-form-item label="Copyright Threshold">
-            <n-input v-model:value="settingsForm['tagger.category_thresholds.copyright']" placeholder="Default"/>
+            <n-input v-model:value="settingsForm['tagger.category-thresholds.copyright']" placeholder="Default"/>
           </n-form-item>
           <n-form-item label="General Threshold">
-            <n-input v-model:value="settingsForm['tagger.category_thresholds.general']" placeholder="Default"/>
+            <n-input v-model:value="settingsForm['tagger.category-thresholds.general']" placeholder="Default"/>
           </n-form-item>
           <n-form-item label="Meta Threshold">
-            <n-input v-model:value="settingsForm['tagger.category_thresholds.meta']" placeholder="Default"/>
+            <n-input v-model:value="settingsForm['tagger.category-thresholds.meta']" placeholder="Default"/>
           </n-form-item>
           <n-form-item label="Rating Threshold">
-            <n-input v-model:value="settingsForm['tagger.category_thresholds.rating']" placeholder="Default"/>
+            <n-input v-model:value="settingsForm['tagger.category-thresholds.rating']" placeholder="Default"/>
           </n-form-item>
         </div>
 
@@ -204,6 +227,20 @@ const resetSystemMutation = useMutation({
       </n-space>
     </n-card>
 
+    <!-- Update Password -->
+    <n-card title="更新密码">
+      <n-form>
+        <n-form-item label="新密码">
+          <n-input type="password" v-model:value="passwordForm.password"/>
+        </n-form-item>
+        <n-form-item label="确认密码">
+          <n-input type="password" v-model:value="passwordForm.confirmPassword"/>
+        </n-form-item>
+        <n-space>
+          <n-button type="primary" @click="handleUpdatePassword">更新密码</n-button>
+        </n-space>
+      </n-form>
+    </n-card>
 
   </div>
 </template>

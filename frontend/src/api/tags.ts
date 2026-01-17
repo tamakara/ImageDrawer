@@ -1,9 +1,6 @@
-import axios from 'axios'
+import apiClient from './client'
 import type {TagDto} from './gallery'
 
-const apiClient = axios.create({
-  baseURL: '/api',
-})
 
 export const tagsApi = {
   listTags: async (query?: string) => {

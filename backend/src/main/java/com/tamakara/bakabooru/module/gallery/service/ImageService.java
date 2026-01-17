@@ -45,13 +45,13 @@ public class ImageService {
     public ImageDto getImage(Long id) {
         return imageRepository.findById(id)
                 .map(imageMapper::toDto)
-                .orElseThrow(() -> new RuntimeException("Image not found"));
+                .orElseThrow(() -> new RuntimeException("找不到图片"));
     }
 
     @Transactional
     public void deleteImage(Long id) {
         Image image = imageRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Image not found"));
+                .orElseThrow(() -> new RuntimeException("找不到图片"));
 
         // storageService.delete(image.getPath()); // 不要删除文件，因为它可能被其他人使用（去重）
         // 或者检查是否被使用。目前，让我们保留文件。
@@ -62,7 +62,7 @@ public class ImageService {
     @Transactional
     public ImageDto updateImage(Long id, ImageDto dto) {
         Image image = imageRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Image not found"));
+                .orElseThrow(() -> new RuntimeException("找不到图片"));
 
         if (dto.getTitle() != null) {
             image.setTitle(dto.getTitle());
@@ -74,12 +74,12 @@ public class ImageService {
     @Transactional
     public ImageDto regenerateTags(Long id) {
         Image image = imageRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Image not found"));
+                .orElseThrow(() -> new RuntimeException("找不到图片"));
 
-        // Call tagger service
+        // 生成标签
         Map<String, List<String>> newTagsMap = taggerService.tagImage(image.getHash());
 
-        // Keep custom tags
+        // 保留自定义标签
         Set<Tag> tagsToKeep = image.getTags().stream()
                 .filter(tag -> "custom".equals(tag.getType()))
                 .collect(Collectors.toSet());
@@ -102,7 +102,7 @@ public class ImageService {
     @Transactional
     public ImageDto addTag(Long id, TagDto tagDto) {
         Image image = imageRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Image not found"));
+                .orElseThrow(() -> new RuntimeException("找不到图片"));
 
         Tag tag = tagService.findOrCreateTag(tagDto.getName(), tagDto.getType() != null ? tagDto.getType() : "custom");
         image.getTags().add(tag);
@@ -114,7 +114,7 @@ public class ImageService {
     @Transactional
     public ImageDto removeTag(Long id, Long tagId) {
         Image image = imageRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Image not found"));
+                .orElseThrow(() -> new RuntimeException("找不到图片"));
 
         image.getTags().removeIf(tag -> tag.getId().equals(tagId));
         image.setUpdatedAt(LocalDateTime.now());
@@ -143,7 +143,7 @@ public class ImageService {
             for (Image image : images) {
                 java.nio.file.Path file = storageService.getFilePath(image.getHash());
                 if (java.nio.file.Files.exists(file)) {
-                    // Unique entry name: title + id + extension
+                    // 文件名: title_id.extension
                     String entryName = String.format("%s_%d.%s",
                             image.getTitle().replaceAll("[\\\\/:*?\"<>|]", "_"),
                             image.getId(),

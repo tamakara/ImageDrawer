@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 
 @Service
@@ -33,16 +34,17 @@ public class SystemSettingService {
         defaults.put("upload.allowed-extensions", "jpg,png,webp,gif,jpeg");
         defaults.put("upload.concurrency", "3");
         defaults.put("upload.poll-interval", "1000");
-        defaults.put("thumbnail.quality", "80");
-        defaults.put("thumbnail.max-size", "800");
+        defaults.put("file.thumbnail.quality", "80");
+        defaults.put("file.thumbnail.max-size", "800");
         defaults.put("tagger.threshold", "0.6");
-        defaults.put("tagger.minConfidence", "0.1");
-        defaults.put("tagger.category_thresholds.artist", "");
-        defaults.put("tagger.category_thresholds.character", "");
-        defaults.put("tagger.category_thresholds.copyright", "");
-        defaults.put("tagger.category_thresholds.general", "");
-        defaults.put("tagger.category_thresholds.meta", "");
-        defaults.put("tagger.category_thresholds.rating", "");
+        defaults.put("tagger.category-thresholds.artist", "");
+        defaults.put("tagger.category-thresholds.character", "");
+        defaults.put("tagger.category-thresholds.copyright", "");
+        defaults.put("tagger.category-thresholds.general", "");
+        defaults.put("tagger.category-thresholds.meta", "");
+        defaults.put("tagger.category-thresholds.rating", "");
+        defaults.put("auth.password", "");
+        defaults.put("auth.initialized", "false");
 
         for (Map.Entry<String, String> entry : defaults.entrySet()) {
             if (!systemSettingRepository.existsById(entry.getKey())) {
@@ -61,6 +63,12 @@ public class SystemSettingService {
 
     public String getSetting(String key, String defaultValue) {
         return settingsCache.getOrDefault(key, defaultValue);
+    }
+
+    public Boolean getBooleanSetting(String key, Boolean defaultValue) {
+        String val = settingsCache.get(key);
+        if (val == null) return defaultValue;
+        return "true".equalsIgnoreCase(val);
     }
 
     public int getIntSetting(String key, int defaultValue) {

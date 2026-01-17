@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field
 class TaggerRequest(BaseModel):
     task_id: str = Field(...)
     threshold: float = Field(0.61, ge=0.0, le=1.0)
-    min_confidence: float = Field(0.01, ge=0.0, le=1.0)
     category_thresholds: dict[str, float] = Field(default_factory=dict)
 
 

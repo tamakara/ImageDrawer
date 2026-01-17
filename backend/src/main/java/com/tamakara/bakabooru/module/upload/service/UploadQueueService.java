@@ -4,7 +4,7 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.jpeg.JpegDirectory;
 import com.tamakara.bakabooru.module.file.service.StorageService;
-import com.tamakara.bakabooru.module.file.utils.FileUtils;
+import com.tamakara.bakabooru.utils.FileUtils;
 import com.tamakara.bakabooru.module.gallery.entity.Image;
 import com.tamakara.bakabooru.module.gallery.repository.ImageRepository;
 import com.tamakara.bakabooru.module.tag.entity.Tag;
@@ -19,9 +19,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.*;

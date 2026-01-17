@@ -3,14 +3,26 @@ import { NConfigProvider, NGlobalStyle, NMessageProvider, NDialogProvider } from
 import { onMounted, onUnmounted } from 'vue'
 import MainLayout from './components/layout/MainLayout.vue'
 import { useThemeStore } from './stores/theme'
+import { authApi } from './api/auth'
+import { useRouter } from 'vue-router'
 
 const themeStore = useThemeStore()
+const router = useRouter()
 
 const preventDefaultContextMenu = (e: MouseEvent) => {
   e.preventDefault()
 }
 
-onMounted(() => {
+onMounted(async () => {
+  try {
+     const status = await authApi.getStatus()
+     if (!status.initialized) {
+       await router.push('/login')
+     }
+  } catch (e) {
+      console.error('Failed to check initialization status', e)
+  }
+
   document.addEventListener('contextmenu', preventDefaultContextMenu)
 })
 

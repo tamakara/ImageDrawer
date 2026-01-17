@@ -1,4 +1,4 @@
-package com.tamakara.bakabooru.module.file.utils;
+package com.tamakara.bakabooru.utils;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,5 +29,4 @@ public class FileUtils {
         int dotIndex = filename.lastIndexOf('.');
         return (dotIndex == -1) ? "" : filename.substring(dotIndex);
     }
-
 }

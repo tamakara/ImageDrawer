@@ -46,7 +46,7 @@ public class FileController {
                 }
 
                 return ResponseEntity.ok()
-                        .contentType(MediaType.IMAGE_JPEG) // Or detect type? For now default to image
+                        .contentType(MediaType.IMAGE_JPEG)
                         .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
                         .body(resource);
             } else {
@@ -61,8 +61,8 @@ public class FileController {
     @Operation(summary = "获取缩略图")
     public ResponseEntity<Resource> getThumbnail(@PathVariable String hash) {
         try {
-            int quality = systemSettingService.getIntSetting("thumbnail.quality", 80);
-            int maxSize = systemSettingService.getIntSetting("thumbnail.max-size", 800);
+            int quality = systemSettingService.getIntSetting("file.thumbnail.quality", 80);
+            int maxSize = systemSettingService.getIntSetting("file.thumbnail.max-size", 800);
             Path file = storageService.getThumbnailPath(hash, quality, maxSize);
             Resource resource = new UrlResource(file.toUri());
 

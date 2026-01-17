@@ -24,6 +24,7 @@
   <name>BaKaBooru</name>
   <packaging>pom</packaging>
   <description>BaKaBooru</description>
+  <inceptionYear>2025</inceptionYear>
 
   <url/>
   <licenses>

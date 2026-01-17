@@ -15,8 +15,6 @@
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <mapstruct.version>1.6.3</mapstruct.version>
-    <springdoc.version>2.3.0</springdoc.version>
   </properties>
 
   <dependencies>
@@ -61,14 +59,14 @@
     <dependency>
       <groupId>org.mapstruct</groupId>
       <artifactId>mapstruct</artifactId>
-      <version>${mapstruct.version}</version>
+      <version>1.6.3</version>
     </dependency>
 
     <!-- OpenAPI -->
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-      <version>${springdoc.version}</version>
+      <version>2.3.0</version>
     </dependency>
 
     <!-- Utils -->
@@ -117,6 +115,12 @@
       <artifactId>metadata-extractor</artifactId>
       <version>2.19.0</version>
     </dependency>
+
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt</artifactId>
+      <version>0.13.0</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -133,7 +137,7 @@
             <path>
               <groupId>org.mapstruct</groupId>
               <artifactId>mapstruct-processor</artifactId>
-              <version>${mapstruct.version}</version>
+              <version>1.6.3</version>
             </path>
           </annotationProcessorPaths>
           <basedir/>

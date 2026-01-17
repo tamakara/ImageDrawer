@@ -1,9 +1,6 @@
-import axios from 'axios'
+import apiClient from './client'
 import type { Page, ImageDto } from './gallery'
 
-const apiClient = axios.create({
-  baseURL: '/api',
-})
 
 export interface SearchRequestDto {
   tagSearch?: string

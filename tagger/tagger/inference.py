@@ -104,7 +104,7 @@ class ONNXImageTagger:
         print(f"模型加载成功。输入名称: {self.input_name}")
         print(f"总标签数: {self.total_tags}, 分类数: {len(set(self.tag_to_category.values()))}")
 
-    def predict_batch(self, image_arrays: list[np.ndarray], threshold=0.5, category_thresholds=None, min_confidence=0.1) -> list[dict]:
+    def predict_batch(self, image_arrays: list[np.ndarray], threshold=0.61, category_thresholds=None) -> list[dict]:
         """对预处理后的图像数组进行批量推理"""
         # 堆叠数组
         batch_input = np.stack(image_arrays)
@@ -135,15 +135,14 @@ class ONNXImageTagger:
             all_probs = {}
             for idx in range(probs.shape[0]):
                 prob_value = float(probs[idx])
-                if prob_value >= min_confidence:
-                    idx_str = str(idx)
-                    tag_name = self.idx_to_tag.get(idx_str, f"unknown-{idx}")
-                    category = self.tag_to_category.get(tag_name, "general")
+                idx_str = str(idx)
+                tag_name = self.idx_to_tag.get(idx_str, f"unknown-{idx}")
+                category = self.tag_to_category.get(tag_name, "general")
 
-                    if category not in all_probs:
-                        all_probs[category] = []
+                if category not in all_probs:
+                    all_probs[category] = []
 
-                    all_probs[category].append((tag_name, prob_value))
+                all_probs[category].append((tag_name, prob_value))
 
             # 在每个类别内按概率排序
             for category in all_probs:
@@ -180,8 +179,7 @@ class ONNXImageTagger:
         return batch_results
 
 
-def process_single_image(model_path, metadata, image_path, threshold=0.61, category_thresholds=None,
-                         min_confidence=0.01):
+def process_single_image(model_path, metadata, image_path, threshold=0.61, category_thresholds=None):
     """
     处理单张图像
     """
@@ -204,7 +202,6 @@ def process_single_image(model_path, metadata, image_path, threshold=0.61, categ
             [img_array],
             threshold=threshold,
             category_thresholds=category_thresholds,
-            min_confidence=min_confidence
         )
         inference_time = time.time() - start_time
 

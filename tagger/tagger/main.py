@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
         sys.exit(1)
 
     # 确保目录存在
-    for d in [DATA_DIR, IMAGE_DIR, TEMP_DIR, MODEL_DIR]:
+    for d in [DATA_DIR, TEMP_DIR, MODEL_DIR, PENDING_DIR]:
         os.makedirs(d, exist_ok=True)
 
     status = "unavailable"
@@ -84,7 +84,6 @@ async def tag_image(request: TaggerRequest) -> TaggerResponse:
                 image_path=image_file,
                 threshold=request.threshold,
                 category_thresholds=request.category_thresholds,
-                min_confidence=request.min_confidence,
             )
 
         if not result['success']:

@@ -35,12 +35,12 @@ public class TaggerService {
     public Map<String, List<String>> tagImage(String image_hash) {
         Map<String, Double> categoryThresholds = new HashMap<>();
 
-        addSettingIfPresent(categoryThresholds, "artist", "tagger.category_thresholds.artist");
-        addSettingIfPresent(categoryThresholds, "character", "tagger.category_thresholds.character");
-        addSettingIfPresent(categoryThresholds, "copyright", "tagger.category_thresholds.copyright");
-        addSettingIfPresent(categoryThresholds, "general", "tagger.category_thresholds.general");
-        addSettingIfPresent(categoryThresholds, "meta", "tagger.category_thresholds.meta");
-        addSettingIfPresent(categoryThresholds, "rating", "tagger.category_thresholds.rating");
+        addSettingIfPresent(categoryThresholds, "artist", "tagger.category-thresholds.artist");
+        addSettingIfPresent(categoryThresholds, "character", "tagger.category-thresholds.character");
+        addSettingIfPresent(categoryThresholds, "copyright", "tagger.category-thresholds.copyright");
+        addSettingIfPresent(categoryThresholds, "general", "tagger.category-thresholds.general");
+        addSettingIfPresent(categoryThresholds, "meta", "tagger.category-thresholds.meta");
+        addSettingIfPresent(categoryThresholds, "rating", "tagger.category-thresholds.rating");
 
         TaggerRequestDto body = new TaggerRequestDto();
         body.setImageHash(image_hash);
