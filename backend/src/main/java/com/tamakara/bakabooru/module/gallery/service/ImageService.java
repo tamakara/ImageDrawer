@@ -1,5 +1,6 @@
 package com.tamakara.bakabooru.module.gallery.service;
 
+import com.tamakara.bakabooru.module.file.service.SignatureService;
 import com.tamakara.bakabooru.module.file.service.StorageService;
 import com.tamakara.bakabooru.module.gallery.dto.ImageDto;
 import com.tamakara.bakabooru.module.gallery.entity.Image;
@@ -35,16 +36,17 @@ public class ImageService {
     private final StorageService storageService;
     private final TagService tagService;
     private final TaggerService taggerService;
+    private final SignatureService signatureService;
 
     @Transactional(readOnly = true)
     public Page<ImageDto> listImages(Pageable pageable) {
-        return imageRepository.findAll(pageable).map(imageMapper::toDto);
+        return imageRepository.findAll(pageable).map(image -> imageMapper.toDto(image, signatureService));
     }
 
     @Transactional(readOnly = true)
     public ImageDto getImage(Long id) {
         return imageRepository.findById(id)
-                .map(imageMapper::toDto)
+                .map(image -> imageMapper.toDto(image, signatureService))
                 .orElseThrow(() -> new RuntimeException("找不到图片"));
     }
 
@@ -68,7 +70,7 @@ public class ImageService {
             image.setTitle(dto.getTitle());
         }
         image.setUpdatedAt(LocalDateTime.now());
-        return imageMapper.toDto(imageRepository.save(image));
+        return imageMapper.toDto(imageRepository.save(image), signatureService);
     }
 
     @Transactional
@@ -84,7 +86,7 @@ public class ImageService {
                 .filter(tag -> "custom".equals(tag.getType()))
                 .collect(Collectors.toSet());
 
-        // Process new tags
+        // 处理新标签
         for (Map.Entry<String, List<String>> entry : newTagsMap.entrySet()) {
             String type = entry.getKey();
             List<String> names = entry.getValue();
@@ -96,7 +98,7 @@ public class ImageService {
 
         image.setTags(tagsToKeep);
         image.setUpdatedAt(LocalDateTime.now());
-        return imageMapper.toDto(imageRepository.save(image));
+        return imageMapper.toDto(imageRepository.save(image), signatureService);
     }
 
     @Transactional
@@ -108,7 +110,7 @@ public class ImageService {
         image.getTags().add(tag);
         image.setUpdatedAt(LocalDateTime.now());
 
-        return imageMapper.toDto(imageRepository.save(image));
+        return imageMapper.toDto(imageRepository.save(image), signatureService);
     }
 
     @Transactional
@@ -119,7 +121,7 @@ public class ImageService {
         image.getTags().removeIf(tag -> tag.getId().equals(tagId));
         image.setUpdatedAt(LocalDateTime.now());
 
-        return imageMapper.toDto(imageRepository.save(image));
+        return imageMapper.toDto(imageRepository.save(image), signatureService);
     }
 
     @Transactional

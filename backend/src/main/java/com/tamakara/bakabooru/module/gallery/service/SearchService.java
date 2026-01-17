@@ -1,5 +1,6 @@
 package com.tamakara.bakabooru.module.gallery.service;
 
+import com.tamakara.bakabooru.module.file.service.SignatureService;
 import com.tamakara.bakabooru.module.gallery.dto.ImageDto;
 import com.tamakara.bakabooru.module.gallery.dto.SearchRequestDto;
 import com.tamakara.bakabooru.module.gallery.entity.Image;
@@ -26,6 +27,7 @@ public class SearchService {
 
     private final ImageRepository imageRepository;
     private final ImageMapper imageMapper;
+    private final SignatureService signatureService;
 
     @Transactional(readOnly = true)
     public Page<ImageDto> search(SearchRequestDto request, Pageable pageable) {
@@ -82,7 +84,7 @@ public class SearchService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        return imageRepository.findAll(spec, effectivePageable).map(imageMapper::toDto);
+        return imageRepository.findAll(spec, effectivePageable).map(image -> imageMapper.toDto(image, signatureService));
     }
 
     private void parseTagSearch(String search, Set<String> included, Set<String> excluded) {

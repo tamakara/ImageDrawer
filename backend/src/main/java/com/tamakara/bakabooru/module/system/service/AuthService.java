@@ -16,7 +16,7 @@ public class AuthService {
 
     private final SystemSettingService systemSettingService;
 
-    public String getEncodedPassword() {
+    private String getEncodedPassword() {
         return systemSettingService.getSetting("auth.password", "");
     }
 

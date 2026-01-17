@@ -1,5 +1,6 @@
 package com.tamakara.bakabooru.module.file.controller;
 
+import com.tamakara.bakabooru.module.file.service.SignatureService;
 import com.tamakara.bakabooru.module.gallery.entity.Image;
 import com.tamakara.bakabooru.module.gallery.repository.ImageRepository;
 import com.tamakara.bakabooru.module.file.service.StorageService;
@@ -12,10 +13,7 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.MalformedURLException;
 import java.nio.file.Path;
@@ -29,12 +27,23 @@ public class FileController {
 
     private final StorageService storageService;
     private final ImageRepository imageRepository;
+    private final SignatureService signatureService;
     private final SystemSettingService systemSettingService;
 
     @GetMapping("/{hash}")
     @Operation(summary = "获取图片文件")
-    public ResponseEntity<Resource> getFile(@PathVariable String hash) {
+    public ResponseEntity<Resource> getFile(
+            @PathVariable String hash,
+            @RequestParam Long expiresAt,
+            @RequestParam String signature
+    ) {
         try {
+            // 验证签名
+            boolean isValid = signatureService.validateSignature("/api/file/" + hash, expiresAt, signature);
+            if (!isValid) {
+                return ResponseEntity.status(403).build();
+            }
+
             Path file = storageService.getFilePath(hash);
             Resource resource = new UrlResource(file.toUri());
 
@@ -59,7 +68,17 @@ public class FileController {
 
     @GetMapping("/thumb/{hash}")
     @Operation(summary = "获取缩略图")
-    public ResponseEntity<Resource> getThumbnail(@PathVariable String hash) {
+    public ResponseEntity<Resource> getThumbnail(
+            @PathVariable String hash,
+            @RequestParam Long expiresAt,
+            @RequestParam String signature
+    ) {
+        // 验证签名
+        boolean isValid = signatureService.validateSignature("/api/file/thumb/" + hash, expiresAt, signature);
+        if (!isValid) {
+            return ResponseEntity.status(403).build();
+        }
+
         try {
             int quality = systemSettingService.getIntSetting("file.thumbnail.quality", 80);
             int maxSize = systemSettingService.getIntSetting("file.thumbnail.max-size", 800);
