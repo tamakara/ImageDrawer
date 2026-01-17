@@ -44,8 +44,6 @@ const scanFolderBatchUpload = (e: Event) => {
   // 根据配置决定是否进行递归过滤
   if (!isRecursiveScan.value) {
     fileArray = fileArray.filter(f => {
-      // webkitRelativePath 格式如 "folder/sub/file.jpg"
-      // split('/').length: 根目录文件为 2 ("folder/file.jpg")
       const depth = f.webkitRelativePath?.split('/').length ?? 0
       return depth <= 2
     })

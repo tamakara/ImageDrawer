@@ -30,9 +30,10 @@ public class BaKaBooruApplication {
                 Files.createDirectories(Paths.get(dataDir, "image"));
                 Files.createDirectories(Paths.get(dataDir, "temp"));
                 Files.createDirectories(Paths.get(dataDir, "temp", "thumbnail"));
+                Files.createDirectories(Paths.get(dataDir, "temp", "pending"));
                 Files.createDirectories(Paths.get(dataDir, "db"));
             } catch (IOException e) {
-                throw new RuntimeException("Failed to create dir", e);
+                throw new RuntimeException("创建目录失败", e);
             }
         });
 

@@ -17,9 +17,9 @@ model_path = None
 metadata = {}
 
 DATA_DIR =  Path(os.environ.get('TAGGER_DATA_DIR'))
-IMAGE_DIR = DATA_DIR / "image"
 TEMP_DIR = DATA_DIR / "temp"
 MODEL_DIR = DATA_DIR / "model"
+PENDING_DIR = TEMP_DIR / "pending"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -77,7 +77,7 @@ async def tag_image(request: TaggerRequest) -> TaggerResponse:
         semaphore = asyncio.Semaphore(1)
 
         async with semaphore:
-            image_file = IMAGE_DIR / request.image_hash
+            image_file = PENDING_DIR / request.task_id
             result = process_single_image(
                 model_path=model_path,
                 metadata=metadata,

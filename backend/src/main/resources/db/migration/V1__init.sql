@@ -49,3 +49,4 @@ CREATE TABLE system_settings
 CREATE INDEX idx_tags_name ON tags (name);
 CREATE INDEX idx_images_hash ON images (hash);
 CREATE INDEX idx_images_created_at ON images (created_at);
+CREATE INDEX idx_image_tags_tag_id ON image_tags (tag_id, image_id);

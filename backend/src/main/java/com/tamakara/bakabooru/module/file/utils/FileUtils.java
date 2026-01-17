@@ -10,7 +10,6 @@ public class FileUtils {
 
     public static String calculateHash(MultipartFile file) {
         try {
-            // TODO: 哈希算法可配置
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(file.getBytes());
             StringBuilder hexString = new StringBuilder();

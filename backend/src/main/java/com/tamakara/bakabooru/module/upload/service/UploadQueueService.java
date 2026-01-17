@@ -169,7 +169,7 @@ public class UploadQueueService {
             throw new RuntimeException("无法获取图片元数据", e);
         }
 
-        storageService.storeImage(taskId,hash);
+        storageService.storeImage(taskId, hash);
         imageRepository.save(image);
 
         updateStatus(task, UploadTask.UploadStatus.COMPLETED);
