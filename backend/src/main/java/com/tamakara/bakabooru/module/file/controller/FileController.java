@@ -44,7 +44,7 @@ public class FileController {
                 return ResponseEntity.status(403).build();
             }
 
-            Path file = storageService.getFilePath(hash);
+            Path file = storageService.getImagePath(hash);
             Resource resource = new UrlResource(file.toUri());
 
             if (resource.exists() || resource.isReadable()) {

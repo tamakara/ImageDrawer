@@ -46,8 +46,12 @@ public class StorageService {
         }
     }
 
-    public Path getFilePath(String hash) {
+    public Path getImagePath(String hash) {
         return appPaths.getImageDir().resolve(hash);
+    }
+
+    public Path getPendingImagePath(String hash) {
+        return appPaths.getPendingDir().resolve(hash);
     }
 
     public Path getThumbnailPath(String hash, int quality, int maxSize) {

@@ -32,7 +32,7 @@ public class TaggerService {
         }
     }
 
-    public Map<String, List<String>> tagImage(String image_hash) {
+    public Map<String, List<String>> tagImage(String imagePath) {
         Map<String, Double> categoryThresholds = new HashMap<>();
 
         addSettingIfPresent(categoryThresholds, "artist", "tagger.category-thresholds.artist");
@@ -43,10 +43,9 @@ public class TaggerService {
         addSettingIfPresent(categoryThresholds, "rating", "tagger.category-thresholds.rating");
 
         TaggerRequestDto body = new TaggerRequestDto();
-        body.setImageHash(image_hash);
-        body.setThreshold(Double.parseDouble(systemSettingService.getSetting("tagger.threshold", "0.6")));
-        body.setMinConfidence(Double.parseDouble(systemSettingService.getSetting("tagger.minConfidence", "0.1")));
-        body.setCategoryThresholds(categoryThresholds);
+        body.setImagePath(imagePath);
+        body.setThreshold(Double.parseDouble(systemSettingService.getSetting("tagger.threshold", "0.61")));
+         body.setCategoryThresholds(categoryThresholds);
 
         TaggerResponseDto response = webClient
                 .post()
@@ -66,7 +65,7 @@ public class TaggerService {
             return response.getData();
         } else {
             String error = response != null ? response.getError() : "Unknown error";
-            throw new RuntimeException("Tagging failed: " + error);
+            throw new RuntimeException("标签生成失败: " + error);
         }
     }
 

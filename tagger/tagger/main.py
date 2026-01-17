@@ -17,9 +17,7 @@ model_path = None
 metadata = {}
 
 DATA_DIR =  Path(os.environ.get('TAGGER_DATA_DIR'))
-TEMP_DIR = DATA_DIR / "temp"
 MODEL_DIR = DATA_DIR / "model"
-PENDING_DIR = TEMP_DIR / "pending"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -32,7 +30,7 @@ async def lifespan(app: FastAPI):
         sys.exit(1)
 
     # 确保目录存在
-    for d in [DATA_DIR, TEMP_DIR, MODEL_DIR, PENDING_DIR]:
+    for d in [DATA_DIR, MODEL_DIR]:
         os.makedirs(d, exist_ok=True)
 
     status = "unavailable"
@@ -77,7 +75,7 @@ async def tag_image(request: TaggerRequest) -> TaggerResponse:
         semaphore = asyncio.Semaphore(1)
 
         async with semaphore:
-            image_file = PENDING_DIR / request.task_id
+            image_file = DATA_DIR / request.image_path
             result = process_single_image(
                 model_path=model_path,
                 metadata=metadata,

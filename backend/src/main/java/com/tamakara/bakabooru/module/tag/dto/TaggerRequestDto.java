@@ -10,14 +10,11 @@ import java.util.Map;
 @NoArgsConstructor
 public class TaggerRequestDto {
 
-    @JsonProperty("image_hash")
-    private String imageHash;
+    @JsonProperty("image_path")
+    private String imagePath;
 
     @JsonProperty("threshold")
     private Double threshold;
-
-    @JsonProperty("min_confidence")
-    private Double minConfidence;
 
     @JsonProperty("category_thresholds")
     private Map<String, Double> categoryThresholds;

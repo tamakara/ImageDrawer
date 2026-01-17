@@ -20,12 +20,17 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -79,7 +84,7 @@ public class ImageService {
                 .orElseThrow(() -> new RuntimeException("找不到图片"));
 
         // 生成标签
-        Map<String, List<String>> newTagsMap = taggerService.tagImage(image.getHash());
+        Map<String, List<String>> newTagsMap = taggerService.tagImage("image/" + image.getHash());
 
         // 保留自定义标签
         Set<Tag> tagsToKeep = image.getTags().stream()
@@ -135,25 +140,25 @@ public class ImageService {
         });
     }
 
-    public void downloadImages(List<Long> ids, java.io.OutputStream outputStream) throws java.io.IOException {
+    public void downloadImages(List<Long> ids, OutputStream outputStream) throws java.io.IOException {
         List<Image> images = imageRepository.findAllById(ids);
         if (images.isEmpty()) {
             return;
         }
 
-        try (java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(outputStream)) {
+        try (ZipOutputStream zos = new ZipOutputStream(outputStream)) {
             for (Image image : images) {
-                java.nio.file.Path file = storageService.getFilePath(image.getHash());
-                if (java.nio.file.Files.exists(file)) {
+               Path file = storageService.getImagePath(image.getHash());
+                if (Files.exists(file)) {
                     // 文件名: title_id.extension
                     String entryName = String.format("%s_%d.%s",
                             image.getTitle().replaceAll("[\\\\/:*?\"<>|]", "_"),
                             image.getId(),
                             image.getExtension());
 
-                    java.util.zip.ZipEntry zipEntry = new java.util.zip.ZipEntry(entryName);
+                    ZipEntry zipEntry = new ZipEntry(entryName);
                     zos.putNextEntry(zipEntry);
-                    java.nio.file.Files.copy(file, zos);
+                    Files.copy(file, zos);
                     zos.closeEntry();
                 }
             }

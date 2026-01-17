@@ -109,7 +109,7 @@ public class UploadQueueService {
             updateStatus(task, UploadTask.UploadStatus.TAGGING);
             try {
                 // 调用 TaggerService 获取标签
-                Map<String, List<String>> tagData = taggerService.tagImage(hash);
+                Map<String, List<String>> tagData = taggerService.tagImage("temp/pending/" + taskId);
 
                 // 将 TagData 转换为实体
                 for (String tagType : tagData.keySet()) {
@@ -125,7 +125,7 @@ public class UploadQueueService {
                     }
                 }
             } catch (Exception e) {
-                throw new RuntimeException("标签生成失败: " + e.getMessage());
+                throw new RuntimeException(e.getMessage());
             }
         }
 
@@ -154,7 +154,7 @@ public class UploadQueueService {
         image.setUpdatedAt(LocalDateTime.now());
 
         // 获取尺寸
-        Path filePath = storageService.getFilePath(hash);
+        Path filePath = storageService.getPendingImagePath(taskId);
         try {
             Metadata metadata = ImageMetadataReader.readMetadata(filePath.toFile());
             JpegDirectory directory = metadata.getFirstDirectoryOfType(JpegDirectory.class);
