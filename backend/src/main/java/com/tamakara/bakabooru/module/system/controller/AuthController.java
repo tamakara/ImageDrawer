@@ -45,7 +45,6 @@ public class AuthController {
 
     @PostMapping("/password")
     public ResponseEntity<Void> updatePassword(@RequestBody Map<String, String> body) {
-        // Interceptor ensures we are authorized
         authService.setPassword(body.getOrDefault("password", ""));
         return ResponseEntity.ok().build();
     }

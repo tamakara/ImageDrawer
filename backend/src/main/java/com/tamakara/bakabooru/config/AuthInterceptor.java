@@ -20,7 +20,7 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         String path = request.getRequestURI();
 
-        if (path.startsWith("/api/auth")) return true;
+        if (path.startsWith("/api/auth/login") || path.startsWith("/api/auth/status") || path.startsWith("/api/auth/setup")) return true;
 
         String token = request.getHeader("Authorization");
         if (StringUtils.hasText(token) && token.startsWith("Bearer ")) {

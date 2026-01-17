@@ -16,8 +16,17 @@ public class AuthService {
 
     private final SystemSettingService systemSettingService;
 
+    private String encodedPasswordCache = null;
+
+    public String getEncodedPassword() {
+        if (encodedPasswordCache == null) {
+            encodedPasswordCache = systemSettingService.getSetting("auth.password", "");
+        }
+        return encodedPasswordCache;
+    }
+
     public boolean isPasswordSet() {
-        String password = systemSettingService.getSetting("auth.password", "");
+        String password = getEncodedPassword();
         return StringUtils.hasText(password);
     }
 
@@ -26,29 +35,22 @@ public class AuthService {
     }
 
     public String login(String password) {
-        String storedEncodedPassword = systemSettingService.getSetting("auth.password", "");
+        String storedEncodedPassword = getEncodedPassword();
         String currentPassword = "";
 
         if (StringUtils.hasText(storedEncodedPassword)) {
             try {
                 currentPassword = new String(Base64.getDecoder().decode(storedEncodedPassword), StandardCharsets.UTF_8);
             } catch (IllegalArgumentException e) {
-                // If decoding fails, treat as empty or mismatch
                 currentPassword = "";
             }
         }
-
-        // If no password set (empty), allow empty login?
-        // User said: "First visit prompt to set password, can also not set password (password is empty string)".
-        // If they choose not to set password, stored is "" (encoded "").
-        // If input matches current, generate token.
 
         if (!currentPassword.equals(password)) {
             throw new RuntimeException("密码错误");
         }
 
-        // Generate token
-        return JwtUtils.createToken(JwtUtils.generateSecretKey(currentPassword), 1000 * 60 * 60 * 24 * 7); // 7 days
+        return JwtUtils.createToken(JwtUtils.generateSecretKey(currentPassword), 1000 * 60 * 60 * 24); //TODO: 自定义过期时间
     }
 
     public void setPassword(String password) {
@@ -61,12 +63,9 @@ public class AuthService {
     }
 
     public void validate(String token) {
-        if (!isInitialized()) return; // Allow if not initialized (to run setup)? Or maybe strict?
-        // Actually, if not initialized, we shouldn't be calling API other than setup.
-        // But let's assume validate is for authorized endpoints.
+        if (!isInitialized()) return;
 
-        String storedEncodedPassword = systemSettingService.getSetting("auth.password", "");
-        // If password is empty, storedEncodedPassword is ""
+        String storedEncodedPassword = getEncodedPassword();
 
         String currentPassword = "";
         if (StringUtils.hasText(storedEncodedPassword)) {
@@ -77,13 +76,6 @@ public class AuthService {
             }
         }
 
-        // If currentPassword is empty, does it mean NO AUTH required?
-        // User says "can also not set password".
-        // If so, token validation might be optional or trivial.
-        // But if client sends token, we validate it.
-        // If client doesn't send token?
-        // Interceptor will call this only if token exists? Or always?
-        // If password is empty, we should probably return void (valid)
         if (!StringUtils.hasText(currentPassword)) {
             return;
         }
