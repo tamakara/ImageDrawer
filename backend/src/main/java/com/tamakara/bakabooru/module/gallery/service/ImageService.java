@@ -72,60 +72,6 @@ public class ImageService {
     }
 
     @Transactional
-    public ImageDto updateImageFile(Long id, MultipartFile file, boolean updateName) {
-        Image image = imageRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Image not found"));
-
-        // 存储新文件
-        String newHash = storageService.store(file);
-
-        // 更新图像实体
-        image.setHash(newHash);
-        image.setSize(file.getSize());
-        image.setUpdatedAt(LocalDateTime.now());
-
-        String originalFilename = file.getOriginalFilename();
-        image.setFileName(originalFilename);
-
-        String extension = "";
-        if (originalFilename != null) {
-            int dotIndex = originalFilename.lastIndexOf('.');
-            if (dotIndex != -1) {
-                extension = originalFilename.substring(dotIndex + 1);
-            }
-        }
-        image.setExtension(extension);
-
-        if (updateName && originalFilename != null) {
-             String title = originalFilename;
-             int dotIndex = originalFilename.lastIndexOf('.');
-             if (dotIndex != -1) {
-                title = originalFilename.substring(0, dotIndex);
-             }
-             image.setTitle(title);
-        }
-
-        // 更新尺寸
-        try (ImageInputStream in = ImageIO.createImageInputStream(storageService.getFilePath(newHash).toFile())) {
-            final Iterator<ImageReader> readers = ImageIO.getImageReaders(in);
-            if (readers.hasNext()) {
-                ImageReader reader = readers.next();
-                try {
-                    reader.setInput(in);
-                    image.setWidth(reader.getWidth(0));
-                    image.setHeight(reader.getHeight(0));
-                } finally {
-                    reader.dispose();
-                }
-            }
-        } catch (Exception e) {
-            // 记录日志
-        }
-
-        return imageMapper.toDto(imageRepository.save(image));
-    }
-
-    @Transactional
     public ImageDto regenerateTags(Long id) {
         Image image = imageRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Image not found"));

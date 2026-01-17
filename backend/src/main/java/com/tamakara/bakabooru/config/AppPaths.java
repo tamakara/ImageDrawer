@@ -15,6 +15,7 @@ public class AppPaths {
     private final Path imageDir;
     private final Path tempDir;
     private final Path thumbnailDir;
+    private final Path pendingDir;
     private final Path dbDir;
 
     public AppPaths(@Value("${app.data-dir}") String dataRoot) {
@@ -24,6 +25,7 @@ public class AppPaths {
         this.imageDir = root.resolve("image");
         this.tempDir = root.resolve("temp");
         this.thumbnailDir = tempDir.resolve("thumbnail");
+        this.pendingDir = tempDir.resolve("pending");
         this.dbDir = root.resolve("db");
     }
 }

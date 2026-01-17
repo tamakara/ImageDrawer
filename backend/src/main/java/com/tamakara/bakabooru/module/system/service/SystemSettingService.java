@@ -18,7 +18,7 @@ public class SystemSettingService {
 
     private final SystemSettingRepository systemSettingRepository;
 
-    // 将设置缓存在内存中以提高性能
+    // 将设置缓存在内存中
     private final Map<String, String> settingsCache = new HashMap<>();
 
     @PostConstruct

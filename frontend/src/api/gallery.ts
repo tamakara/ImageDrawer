@@ -41,13 +41,6 @@ export interface Page<T> {
 }
 
 export const galleryApi = {
-  listImages: async (page: number, size: number) => {
-    const response = await apiClient.get<Page<ImageDto>>('/images', {
-      params: { page, size }
-    })
-    return response.data
-  },
-
   getImage: async (id: number) => {
     const response = await apiClient.get<ImageDto>(`/images/${id}`)
     return response.data
@@ -62,17 +55,6 @@ export const galleryApi = {
     return response.data
   },
 
-  updateImageFile: async (id: number, file: File, updateName: boolean) => {
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('updateName', updateName.toString())
-    const response = await apiClient.post<ImageDto>(`/images/${id}/file`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
-    return response.data
-  },
 
   regenerateTags: async (id: number) => {
     const response = await apiClient.post<ImageDto>(`/images/${id}/tags/regenerate`)

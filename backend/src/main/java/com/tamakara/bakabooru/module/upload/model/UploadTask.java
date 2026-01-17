@@ -15,11 +15,11 @@ public class UploadTask {
     private LocalDateTime updatedAt;
 
     // 内部使用
-    private String tempFilePath;
+    private String hash;
     private boolean enableTagging;
 
     public enum UploadStatus {
-        PENDING,
+        PENDING, // 等待处理
         UPLOADING, // 如果我们一次性接收文件，则实际上不使用，但如果我们流式传输或分块传输，则很有用
         PROCESSING, // 预处理（哈希，缩略图）
         TAGGING, // AI 标注器

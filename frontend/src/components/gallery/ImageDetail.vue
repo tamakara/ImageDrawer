@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import {computed, ref, watch} from 'vue'
-import type {UploadCustomRequestOptions} from 'naive-ui'
 import {
   NButton,
-  NCheckbox,
   NDivider,
   NIcon,
   NImage,
@@ -14,13 +12,11 @@ import {
   NSelect,
   NTag,
   NTooltip,
-  NUpload,
   useMessage
 } from 'naive-ui'
 import {
   AddOutline,
   CloseOutline,
-  CloudUploadOutline,
   DocumentTextOutline,
   DownloadOutline,
   HardwareChipOutline,
@@ -199,23 +195,6 @@ const handleDownload = () => {
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
-}
-
-const showReplaceModal = ref(false)
-const replaceUpdateName = ref(false)
-
-const handleReplace = async ({file, onFinish, onError}: UploadCustomRequestOptions) => {
-  if (!image.value) return
-  try {
-    image.value = await galleryApi.updateImageFile(image.value.id, file.file as File, replaceUpdateName.value)
-    message.success('文件已替换')
-    emit('refresh')
-    showReplaceModal.value = false
-    onFinish()
-  } catch (e) {
-    message.error('替换文件失败')
-    onError()
-  }
 }
 
 const groupedTags = computed(() => {
@@ -477,18 +456,6 @@ const getTagColor = (type: string) => {
             下载原图
           </n-button>
 
-          <n-popconfirm @positive-click="showReplaceModal = true" :show-icon="false">
-            <template #trigger>
-              <n-button block secondary type="warning">
-                <template #icon>
-                  <n-icon :component="CloudUploadOutline"/>
-                </template>
-                替换文件
-              </n-button>
-            </template>
-            确定要替换文件吗？
-          </n-popconfirm>
-
           <n-popconfirm @positive-click="handleDelete">
             <template #trigger>
               <n-button block secondary type="error">
@@ -502,23 +469,6 @@ const getTagColor = (type: string) => {
           </n-popconfirm>
         </div>
       </div>
-    </div>
-  </n-modal>
-
-  <!-- Replace File Modal -->
-  <n-modal v-model:show="showReplaceModal" preset="dialog" title="替换文件">
-    <div class="flex flex-col gap-4">
-      <p>上传新文件以替换当前文件。</p>
-      <n-checkbox v-model:checked="replaceUpdateName">
-        将图片名称更新为新文件名
-      </n-checkbox>
-      <n-upload
-          :custom-request="handleReplace"
-          :show-file-list="false"
-          accept="image/*"
-      >
-        <n-button block type="primary">选择文件</n-button>
-      </n-upload>
     </div>
   </n-modal>
 </template>

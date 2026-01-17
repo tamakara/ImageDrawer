@@ -46,15 +46,6 @@ public class ImageController {
         return imageService.updateImage(id, dto);
     }
 
-    @PostMapping(value = "/{id}/file", consumes = "multipart/form-data")
-    @Operation(summary = "更新图片文件")
-    public ImageDto updateImageFile(
-            @PathVariable Long id,
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "updateName", defaultValue = "false") boolean updateName) {
-        return imageService.updateImageFile(id, file, updateName);
-    }
-
     @PostMapping("/{id}/tags/regenerate")
     @Operation(summary = "重新生成标签")
     public ImageDto regenerateTags(@PathVariable Long id) {

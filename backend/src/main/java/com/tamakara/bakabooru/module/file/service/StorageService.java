@@ -1,6 +1,7 @@
 package com.tamakara.bakabooru.module.file.service;
 
 import com.tamakara.bakabooru.config.AppPaths;
+import com.tamakara.bakabooru.module.file.utils.FileUtils;
 import lombok.RequiredArgsConstructor;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.stereotype.Service;
@@ -11,9 +12,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.stream.Stream;
+
 
 @Service
 @RequiredArgsConstructor
@@ -21,22 +21,32 @@ public class StorageService {
 
     private final AppPaths appPaths;
 
-    public String store(MultipartFile file) {
+    public void storePendingImage(String taskId, MultipartFile file) {
         try {
             if (file.isEmpty()) {
-                throw new RuntimeException("Failed to store empty file.");
+                throw new RuntimeException("文件为空");
             }
-            String hash = calculateHash(file);
-            Path destinationFile = appPaths.getImageDir().resolve(hash).normalize().toAbsolutePath();
 
-            if (!Files.exists(destinationFile)) {
-                try (InputStream inputStream = file.getInputStream()) {
-                    Files.copy(inputStream, destinationFile, StandardCopyOption.REPLACE_EXISTING);
-                }
+            // 待处理文件路径
+            Path pendingFile = appPaths.getPendingDir().resolve(taskId).normalize().toAbsolutePath();
+
+            // 存储文件
+            try (InputStream inputStream = file.getInputStream()) {
+                Files.copy(inputStream, pendingFile, StandardCopyOption.REPLACE_EXISTING);
             }
-            return hash;
+
         } catch (IOException e) {
-            throw new RuntimeException("Failed to store file.", e);
+            throw new RuntimeException("待处理文件存储失败。", e);
+        }
+    }
+
+    public void storeImage(String taskId, String hash) {
+        try {
+            Path pendingFile = appPaths.getPendingDir().resolve(taskId).normalize().toAbsolutePath();
+            Path destinationFile = appPaths.getImageDir().resolve(hash).normalize().toAbsolutePath();
+            Files.copy(pendingFile, destinationFile);
+        } catch (Exception e) {
+            throw new RuntimeException("图片复制失败.", e);
         }
     }
 
@@ -82,20 +92,5 @@ public class StorageService {
         return appPaths.getImageDir().resolve(hash);
     }
 
-    public String calculateHash(MultipartFile file) {
-        try {
-            // TODO: 哈希算法可配置
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(file.getBytes());
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (NoSuchAlgorithmException | IOException e) {
-            throw new RuntimeException("Failed to calculate hash", e);
-        }
-    }
+
 }
