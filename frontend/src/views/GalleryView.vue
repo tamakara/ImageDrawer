@@ -5,7 +5,6 @@ import {galleryApi} from '../api/gallery'
 import {computed, h, nextTick, reactive, ref, watch} from 'vue'
 import {
   NButton,
-  NCheckbox,
   NDropdown,
   NEmpty,
   NForm,
@@ -21,7 +20,6 @@ import {
   NRadioButton,
   NRadioGroup,
   NSelect,
-  NSlider,
   NSpace,
   NSpin,
   useDialog,
@@ -37,6 +35,7 @@ import {
   DownloadOutline,
   EyeOutline,
   FilterOutline,
+  FlashOutline,
   SquareOutline,
   TrashOutline
 } from '@vicons/ionicons5'
@@ -48,13 +47,40 @@ const formState = reactive({
   tagSearch: '',
   sortBy: 'RANDOM',
   sortDirection: 'DESC',
-  enableWidth: false,
-  widthRange: [0, 4000],
-  enableHeight: false,
-  heightRange: [0, 4000],
-  enableSize: false,
-  sizeRange: [0, 50] // MB
+  widthMin: null as number | null,
+  widthMax: null as number | null,
+  heightMin: null as number | null,
+  heightMax: null as number | null,
+  sizeMin: null as number | null, // MB
+  sizeMax: null as number | null  // MB
 })
+
+const llmQuery = ref('')
+const isLlmParsing = ref(false)
+
+async function handleParseConfig() {
+  if (!llmQuery.value.trim()) return
+  try {
+    isLlmParsing.value = true
+    const dto = await searchApi.parseLlm(llmQuery.value)
+
+    if (dto.keyword) formState.keyword = dto.keyword
+    if (dto.tagSearch) formState.tagSearch = dto.tagSearch
+
+    formState.widthMin = dto.widthMin ?? null
+    formState.widthMax = dto.widthMax ?? null
+    formState.heightMin = dto.heightMin ?? null
+    formState.heightMax = dto.heightMax ?? null
+    formState.sizeMin = dto.sizeMin ? Math.floor(dto.sizeMin / 1024 / 1024) : null
+    formState.sizeMax = dto.sizeMax ? Math.ceil(dto.sizeMax / 1024 / 1024) : null
+
+    message.success('配置已更新，请点击搜索')
+  } catch (e: any) {
+    message.error('解析失败: ' + (e.message || '未知错误'))
+  } finally {
+    isLlmParsing.value = false
+  }
+}
 
 // 响应式布局控制
 const breakpoints = useBreakpoints(breakpointsTailwind)
@@ -68,8 +94,7 @@ watch(isMobile, (val) => {
 // 激活的搜索状态（点击搜索时应用）
 const activeSearchState = ref({
   ...formState,
-  randomSeed:  uuidv4()
-
+  randomSeed: uuidv4()
 })
 const page = ref(1)
 const pageSize = ref(20)
@@ -88,12 +113,13 @@ function handleReset() {
   formState.tagSearch = ''
   formState.sortBy = 'RANDOM'
   formState.sortDirection = 'DESC'
-  formState.enableWidth = false
-  formState.widthRange = [0, 4000]
-  formState.enableHeight = false
-  formState.heightRange = [0, 4000]
-  formState.enableSize = false
-  formState.sizeRange = [0, 50]
+  formState.widthMin = null
+  formState.widthMax = null
+  formState.heightMin = null
+  formState.heightMax = null
+  formState.sizeMin = null
+  formState.sizeMax = null
+  llmQuery.value = ''
   handleSearch()
 }
 
@@ -101,28 +127,34 @@ function handleReset() {
 const {
   data,
   isLoading,
-  refetch
+  refetch,
+  isError,
+  error
 } = useQuery({
   queryKey: ['images', activeSearchState, page, pageSize],
+  retry: false,
   queryFn: () => {
     const sort = `${activeSearchState.value.sortBy},${activeSearchState.value.sortDirection}`
-
-    // Ensure arrays are defined before accessing
-    const widthRange = activeSearchState.value.widthRange || [0, 0];
-    const heightRange = activeSearchState.value.heightRange || [0, 0];
-    const sizeRange = activeSearchState.value.sizeRange || [0, 0];
 
     return searchApi.search({
       keyword: activeSearchState.value.keyword,
       tagSearch: activeSearchState.value.tagSearch,
       randomSeed: activeSearchState.value.randomSeed,
-      widthMin: activeSearchState.value.enableWidth ? widthRange[0] : undefined,
-      widthMax: activeSearchState.value.enableWidth ? widthRange[1] : undefined,
-      heightMin: activeSearchState.value.enableHeight ? heightRange[0] : undefined,
-      heightMax: activeSearchState.value.enableHeight ? heightRange[1] : undefined,
-      sizeMin: activeSearchState.value.enableSize ? (sizeRange[0] ?? 0) * 1024 * 1024 : undefined,
-      sizeMax: activeSearchState.value.enableSize ? (sizeRange[1] ?? 0) * 1024 * 1024 : undefined
+      widthMin: activeSearchState.value.widthMin ?? undefined,
+      widthMax: activeSearchState.value.widthMax ?? undefined,
+      heightMin: activeSearchState.value.heightMin ?? undefined,
+      heightMax: activeSearchState.value.heightMax ?? undefined,
+      sizeMin: activeSearchState.value.sizeMin ? activeSearchState.value.sizeMin * 1024 * 1024 : undefined,
+      sizeMax: activeSearchState.value.sizeMax ? activeSearchState.value.sizeMax * 1024 * 1024 : undefined
     }, page.value - 1, pageSize.value, sort)
+  }
+})
+
+watch(isError, (val) => {
+  if (val) {
+    const err = error.value as any
+    const msg = err?.response?.data?.message || err?.message || '搜索失败'
+    message.error(msg)
   }
 })
 
@@ -372,7 +404,37 @@ async function handleBatchDownload() {
         </div>
 
         <div class="flex-1 overflow-y-auto p-4">
-          <n-form size="small" label-placement="top">
+          <div class="mb-5">
+            <label class="text-xs font-medium text-gray-500 mb-1 block">智能解析配置</label>
+            <n-input
+                v-model:value="llmQuery"
+                placeholder="在此描述想要查找的图片特征（如：高分辨率的风景图），AI 将自动解析并填充下方的搜索表单..."
+                type="textarea"
+                :autosize="{ minRows: 4, maxRows: 4 }"
+                size="small"
+                @keydown.ctrl.enter="handleParseConfig"
+            />
+            <n-button
+                type="primary"
+                secondary
+                block
+                dashed
+                size="small"
+                class="mt-2"
+                @click="handleParseConfig"
+                :loading="isLlmParsing"
+                :disabled="!llmQuery"
+            >
+              <template #icon>
+                <n-icon>
+                  <FlashOutline />
+                </n-icon>
+              </template>
+              智能解析配置
+            </n-button>
+          </div>
+
+          <n-form size="small" label-placement="top" class="pt-2 border-t border-gray-100 dark:border-gray-800">
             <n-form-item label="关键字">
               <n-input
                   v-model:value="formState.keyword"
@@ -386,7 +448,7 @@ async function handleBatchDownload() {
               <tag-search-input
                   v-model:value="formState.tagSearch"
                   placeholder="输入标签，空格分隔，-排除"
-                  :autosize="{minRows:2, maxRows:5}"
+                  :autosize="{minRows:1, maxRows:5}"
                   @search="handleSearch"
               />
             </n-form-item>
@@ -394,95 +456,77 @@ async function handleBatchDownload() {
             <!-- 尺寸和大小过滤器 -->
             <div class="space-y-4 my-2">
               <div class="border rounded-md p-3 border-gray-100 dark:border-gray-800">
-                <div class="flex justify-between items-center mb-2">
+                <div class="mb-2">
                   <label class="text-xs font-medium text-gray-500">宽度范围</label>
-                  <n-checkbox v-model:checked="formState.enableWidth" size="small">启用</n-checkbox>
                 </div>
-                <div v-if="formState.enableWidth">
-                  <div class="flex gap-2 mb-2">
-                    <n-input-number
-                        v-model:value="formState.widthRange[0]"
-                        placeholder="MIN"
-                        :min="0"
-                        :max="formState.widthRange[1]"
-                        class="flex-1"
-                        size="tiny"
-                        :show-button="false"
-                    />
-                    <span class="text-gray-400 self-center">-</span>
-                    <n-input-number
-                        v-model:value="formState.widthRange[1]"
-                        placeholder="MAX"
-                        :min="formState.widthRange[0]"
-                        :max="4000"
-                        class="flex-1"
-                        size="tiny"
-                        :show-button="false"
-                    />
-                  </div>
-                  <n-slider v-model:value="formState.widthRange" range :step="100" :max="4000" />
+                <div class="flex gap-2">
+                  <n-input-number
+                      v-model:value="formState.widthMin"
+                      placeholder="MIN"
+                      :min="0"
+                      class="flex-1"
+                      size="tiny"
+                      :show-button="false"
+                  />
+                  <span class="text-gray-400 self-center">-</span>
+                  <n-input-number
+                      v-model:value="formState.widthMax"
+                      placeholder="MAX"
+                      :min="0"
+                      class="flex-1"
+                      size="tiny"
+                      :show-button="false"
+                  />
                 </div>
               </div>
 
               <div class="border rounded-md p-3 border-gray-100 dark:border-gray-800">
-                <div class="flex justify-between items-center mb-2">
+                <div class="mb-2">
                   <label class="text-xs font-medium text-gray-500">高度范围</label>
-                  <n-checkbox v-model:checked="formState.enableHeight" size="small">启用</n-checkbox>
                 </div>
-                <div v-if="formState.enableHeight">
-                  <div class="flex gap-2 mb-2">
-                    <n-input-number
-                        v-model:value="formState.heightRange[0]"
-                        placeholder="MIN"
-                        :min="0"
-                        :max="formState.heightRange[1]"
-                        class="flex-1"
-                        size="tiny"
-                        :show-button="false"
-                    />
-                    <span class="text-gray-400 self-center">-</span>
-                    <n-input-number
-                        v-model:value="formState.heightRange[1]"
-                        placeholder="MAX"
-                        :min="formState.heightRange[0]"
-                        :max="4000"
-                        class="flex-1"
-                        size="tiny"
-                        :show-button="false"
-                    />
-                  </div>
-                  <n-slider v-model:value="formState.heightRange" range :step="100" :max="4000" />
+                <div class="flex gap-2">
+                  <n-input-number
+                      v-model:value="formState.heightMin"
+                      placeholder="MIN"
+                      :min="0"
+                      class="flex-1"
+                      size="tiny"
+                      :show-button="false"
+                  />
+                  <span class="text-gray-400 self-center">-</span>
+                  <n-input-number
+                      v-model:value="formState.heightMax"
+                      placeholder="MAX"
+                      :min="0"
+                      class="flex-1"
+                      size="tiny"
+                      :show-button="false"
+                  />
                 </div>
               </div>
 
               <div class="border rounded-md p-3 border-gray-100 dark:border-gray-800">
-                <div class="flex justify-between items-center mb-2">
+                <div class="mb-2">
                   <label class="text-xs font-medium text-gray-500">文件大小 (MB)</label>
-                  <n-checkbox v-model:checked="formState.enableSize" size="small">启用</n-checkbox>
                 </div>
-                <div v-if="formState.enableSize">
-                  <div class="flex gap-2 mb-2">
-                    <n-input-number
-                        v-model:value="formState.sizeRange[0]"
-                        placeholder="MIN"
-                        :min="0"
-                        :max="formState.sizeRange[1]"
-                        class="flex-1"
-                        size="tiny"
-                        :show-button="false"
-                    />
-                    <span class="text-gray-400 self-center">-</span>
-                    <n-input-number
-                        v-model:value="formState.sizeRange[1]"
-                        placeholder="MAX"
-                        :min="formState.sizeRange[0]"
-                        :max="50"
-                        class="flex-1"
-                        size="tiny"
-                        :show-button="false"
-                    />
-                  </div>
-                  <n-slider v-model:value="formState.sizeRange" range :step="1" :max="50" />
+                <div class="flex gap-2">
+                  <n-input-number
+                      v-model:value="formState.sizeMin"
+                      placeholder="MIN"
+                      :min="0"
+                      class="flex-1"
+                      size="tiny"
+                      :show-button="false"
+                  />
+                  <span class="text-gray-400 self-center">-</span>
+                  <n-input-number
+                      v-model:value="formState.sizeMax"
+                      placeholder="MAX"
+                      :min="0"
+                      class="flex-1"
+                      size="tiny"
+                      :show-button="false"
+                  />
                 </div>
               </div>
             </div>
@@ -499,6 +543,7 @@ async function handleBatchDownload() {
                 </n-space>
               </n-radio-group>
             </n-form-item>
+
           </n-form>
         </div>
 
@@ -529,11 +574,14 @@ async function handleBatchDownload() {
     <n-layout class="h-full" content-style="display: flex; flex-direction: column; height: 100%;">
 
       <!-- 顶部功能栏 -->
-      <n-layout-header bordered class="p-3 flex justify-between items-center transition-all" :class="isSelectionMode ? 'bg-primary-50 dark:bg-gray-800' : ''">
+      <n-layout-header bordered class="p-3 flex justify-between items-center transition-all"
+                       :class="isSelectionMode ? 'bg-primary-50 dark:bg-gray-800' : ''">
         <div v-if="isSelectionMode" class="flex items-center gap-4">
           <n-button circle secondary @click="clearSelection">
             <template #icon>
-              <n-icon><CloseCircleOutline /></n-icon>
+              <n-icon>
+                <CloseCircleOutline/>
+              </n-icon>
             </template>
           </n-button>
           <span class="text-base font-medium">已选中 {{ selectedIds.size }} 项</span>
@@ -541,7 +589,9 @@ async function handleBatchDownload() {
         <div v-else class="flex items-center">
           <n-button quaternary circle @click="collapsed = !collapsed">
             <template #icon>
-              <n-icon><FilterOutline /></n-icon>
+              <n-icon>
+                <FilterOutline/>
+              </n-icon>
             </template>
           </n-button>
         </div>
@@ -550,11 +600,19 @@ async function handleBatchDownload() {
             {{ isAllSelected ? '取消全选' : '全选' }}
           </n-button>
           <n-button type="info" secondary @click="handleBatchDownload" :disabled="!isSelectionMode">
-            <template #icon><n-icon><DownloadOutline/></n-icon></template>
+            <template #icon>
+              <n-icon>
+                <DownloadOutline/>
+              </n-icon>
+            </template>
             下载
           </n-button>
           <n-button type="error" secondary @click="handleBatchDelete" :disabled="!isSelectionMode">
-            <template #icon><n-icon><TrashOutline/></n-icon></template>
+            <template #icon>
+              <n-icon>
+                <TrashOutline/>
+              </n-icon>
+            </template>
             删除
           </n-button>
         </div>
@@ -595,11 +653,13 @@ async function handleBatchDownload() {
             <div v-if="selectedIds.has(image.id)" class="absolute inset-0 bg-primary-500/20 pointer-events-none"></div>
 
             <!-- 选中框 -->
-            <div v-if="isSelectionMode" class="absolute top-2 right-2 z-10 transition-all" @click.stop="toggleSelection(image.id)">
-               <n-icon size="24" :class="selectedIds.has(image.id) ? 'text-primary-500 bg-white rounded-md' : 'text-white/80 hover:text-white drop-shadow-md'">
-                 <Checkbox v-if="selectedIds.has(image.id)" />
-                 <SquareOutline v-else />
-               </n-icon>
+            <div v-if="isSelectionMode" class="absolute top-2 right-2 z-10 transition-all"
+                 @click.stop="toggleSelection(image.id)">
+              <n-icon size="24"
+                      :class="selectedIds.has(image.id) ? 'text-primary-500 bg-white rounded-md' : 'text-white/80 hover:text-white drop-shadow-md'">
+                <Checkbox v-if="selectedIds.has(image.id)"/>
+                <SquareOutline v-else/>
+              </n-icon>
             </div>
 
             <div
@@ -625,9 +685,9 @@ async function handleBatchDownload() {
     </n-layout>
 
     <ImageDetail
-      v-model:show="showDetail"
-      :image-id="selectedDetailImageId"
-      @refresh="refetch"
+        v-model:show="showDetail"
+        :image-id="selectedDetailImageId"
+        @refresh="refetch"
     />
 
     <n-dropdown

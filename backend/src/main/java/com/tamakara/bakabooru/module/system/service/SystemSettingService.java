@@ -45,6 +45,9 @@ public class SystemSettingService {
         defaults.put("tagger.category-thresholds.rating", "");
         defaults.put("auth.password", "");
         defaults.put("auth.initialized", "false");
+        defaults.put("llm.url", "");
+        defaults.put("llm.model", "");
+        defaults.put("llm.api-key", "");
 
         for (Map.Entry<String, String> entry : defaults.entrySet()) {
             if (!systemSettingRepository.existsById(entry.getKey())) {

@@ -39,6 +39,8 @@ server:
   port: 8080
   servlet:
     context-path: /
+  error:
+    include-message: always
 
 # 监控端点配置
 management:

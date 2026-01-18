@@ -4,6 +4,7 @@ import com.tamakara.bakabooru.module.system.service.SystemSettingService;
 import com.tamakara.bakabooru.module.tag.dto.TaggerRequestDto;
 import com.tamakara.bakabooru.module.tag.dto.TaggerResponseDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;

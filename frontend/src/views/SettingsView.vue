@@ -39,7 +39,10 @@ const settingsForm = ref<Record<string, string>>({
   'tagger.category-thresholds.copyright': '',
   'tagger.category-thresholds.general': '',
   'tagger.category-thresholds.meta': '',
-  'tagger.category-thresholds.rating': ''
+  'tagger.category-thresholds.rating': '',
+  'llm.url': '',
+  'llm.api-key': '',
+  'llm.model': ''
 })
 
 const thumbnailSizeOptions = [
@@ -193,6 +196,19 @@ const resetSystemMutation = useMutation({
           </n-form-item>
           <n-form-item label="Rating Threshold">
             <n-input v-model:value="settingsForm['tagger.category-thresholds.rating']" placeholder="Default"/>
+          </n-form-item>
+        </div>
+
+        <n-divider title-placement="left">LLM 设置</n-divider>
+        <n-form-item label="API URL">
+          <n-input v-model:value="settingsForm['llm.url']" placeholder="https://api.openai.com/v1/chat/completions" />
+        </n-form-item>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <n-form-item label="API Key">
+            <n-input v-model:value="settingsForm['llm.api-key']" type="password" show-password-on="click" />
+          </n-form-item>
+          <n-form-item label="Model Name">
+            <n-input v-model:value="settingsForm['llm.model']" placeholder="gpt-3.5-turbo" />
           </n-form-item>
         </div>
 
