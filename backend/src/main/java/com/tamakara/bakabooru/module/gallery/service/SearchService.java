@@ -62,6 +62,28 @@ public class SearchService {
                 ));
             }
 
+            // 尺寸限制
+            if (request.getWidthMin() != null) {
+                predicates.add(cb.ge(root.get("width"), request.getWidthMin()));
+            }
+            if (request.getWidthMax() != null) {
+                predicates.add(cb.le(root.get("width"), request.getWidthMax()));
+            }
+
+            if (request.getHeightMin() != null) {
+                predicates.add(cb.ge(root.get("height"), request.getHeightMin()));
+            }
+            if (request.getHeightMax() != null) {
+                predicates.add(cb.le(root.get("height"), request.getHeightMax()));
+            }
+
+            if (request.getSizeMin() != null) {
+                predicates.add(cb.ge(root.get("size"), request.getSizeMin()));
+            }
+            if (request.getSizeMax() != null) {
+                predicates.add(cb.le(root.get("size"), request.getSizeMax()));
+            }
+
             // 随机排序
             if (isRandomSort && Long.class != query.getResultType()) {
                 if (hasText(request.getRandomSeed())) {

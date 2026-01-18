@@ -5,6 +5,12 @@ export interface SearchRequestDto {
   tagSearch?: string
   keyword?: string
   randomSeed?: string
+  widthMin?: number
+  widthMax?: number
+  heightMin?: number
+  heightMax?: number
+  sizeMin?: number
+  sizeMax?: number
 }
 
 export const searchApi = {

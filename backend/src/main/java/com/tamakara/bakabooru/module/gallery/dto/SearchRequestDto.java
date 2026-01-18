@@ -7,4 +7,10 @@ public class SearchRequestDto {
     private String tagSearch;
     private String keyword;
     private String randomSeed;
+    private Integer widthMin;
+    private Integer widthMax;
+    private Integer heightMin;
+    private Integer heightMax;
+    private Long sizeMin;
+    private Long sizeMax;
 }

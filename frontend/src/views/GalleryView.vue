@@ -5,12 +5,14 @@ import {galleryApi} from '../api/gallery'
 import {computed, h, nextTick, reactive, ref, watch} from 'vue'
 import {
   NButton,
+  NCheckbox,
   NDropdown,
   NEmpty,
   NForm,
   NFormItem,
   NIcon,
   NInput,
+  NInputNumber,
   NLayout,
   NLayoutContent,
   NLayoutFooter,
@@ -19,6 +21,7 @@ import {
   NRadioButton,
   NRadioGroup,
   NSelect,
+  NSlider,
   NSpace,
   NSpin,
   useDialog,
@@ -44,7 +47,13 @@ const formState = reactive({
   keyword: '',
   tagSearch: '',
   sortBy: 'RANDOM',
-  sortDirection: 'DESC'
+  sortDirection: 'DESC',
+  enableWidth: false,
+  widthRange: [0, 4000],
+  enableHeight: false,
+  heightRange: [0, 4000],
+  enableSize: false,
+  sizeRange: [0, 50] // MB
 })
 
 // 响应式布局控制
@@ -79,6 +88,12 @@ function handleReset() {
   formState.tagSearch = ''
   formState.sortBy = 'RANDOM'
   formState.sortDirection = 'DESC'
+  formState.enableWidth = false
+  formState.widthRange = [0, 4000]
+  formState.enableHeight = false
+  formState.heightRange = [0, 4000]
+  formState.enableSize = false
+  formState.sizeRange = [0, 50]
   handleSearch()
 }
 
@@ -91,10 +106,22 @@ const {
   queryKey: ['images', activeSearchState, page, pageSize],
   queryFn: () => {
     const sort = `${activeSearchState.value.sortBy},${activeSearchState.value.sortDirection}`
+
+    // Ensure arrays are defined before accessing
+    const widthRange = activeSearchState.value.widthRange || [0, 0];
+    const heightRange = activeSearchState.value.heightRange || [0, 0];
+    const sizeRange = activeSearchState.value.sizeRange || [0, 0];
+
     return searchApi.search({
       keyword: activeSearchState.value.keyword,
       tagSearch: activeSearchState.value.tagSearch,
-      randomSeed: activeSearchState.value.randomSeed
+      randomSeed: activeSearchState.value.randomSeed,
+      widthMin: activeSearchState.value.enableWidth ? widthRange[0] : undefined,
+      widthMax: activeSearchState.value.enableWidth ? widthRange[1] : undefined,
+      heightMin: activeSearchState.value.enableHeight ? heightRange[0] : undefined,
+      heightMax: activeSearchState.value.enableHeight ? heightRange[1] : undefined,
+      sizeMin: activeSearchState.value.enableSize ? (sizeRange[0] ?? 0) * 1024 * 1024 : undefined,
+      sizeMax: activeSearchState.value.enableSize ? (sizeRange[1] ?? 0) * 1024 * 1024 : undefined
     }, page.value - 1, pageSize.value, sort)
   }
 })
@@ -363,6 +390,102 @@ async function handleBatchDownload() {
                   @search="handleSearch"
               />
             </n-form-item>
+
+            <!-- 尺寸和大小过滤器 -->
+            <div class="space-y-4 my-2">
+              <div class="border rounded-md p-3 border-gray-100 dark:border-gray-800">
+                <div class="flex justify-between items-center mb-2">
+                  <label class="text-xs font-medium text-gray-500">宽度范围</label>
+                  <n-checkbox v-model:checked="formState.enableWidth" size="small">启用</n-checkbox>
+                </div>
+                <div v-if="formState.enableWidth">
+                  <div class="flex gap-2 mb-2">
+                    <n-input-number
+                        v-model:value="formState.widthRange[0]"
+                        placeholder="MIN"
+                        :min="0"
+                        :max="formState.widthRange[1]"
+                        class="flex-1"
+                        size="tiny"
+                        :show-button="false"
+                    />
+                    <span class="text-gray-400 self-center">-</span>
+                    <n-input-number
+                        v-model:value="formState.widthRange[1]"
+                        placeholder="MAX"
+                        :min="formState.widthRange[0]"
+                        :max="4000"
+                        class="flex-1"
+                        size="tiny"
+                        :show-button="false"
+                    />
+                  </div>
+                  <n-slider v-model:value="formState.widthRange" range :step="100" :max="4000" />
+                </div>
+              </div>
+
+              <div class="border rounded-md p-3 border-gray-100 dark:border-gray-800">
+                <div class="flex justify-between items-center mb-2">
+                  <label class="text-xs font-medium text-gray-500">高度范围</label>
+                  <n-checkbox v-model:checked="formState.enableHeight" size="small">启用</n-checkbox>
+                </div>
+                <div v-if="formState.enableHeight">
+                  <div class="flex gap-2 mb-2">
+                    <n-input-number
+                        v-model:value="formState.heightRange[0]"
+                        placeholder="MIN"
+                        :min="0"
+                        :max="formState.heightRange[1]"
+                        class="flex-1"
+                        size="tiny"
+                        :show-button="false"
+                    />
+                    <span class="text-gray-400 self-center">-</span>
+                    <n-input-number
+                        v-model:value="formState.heightRange[1]"
+                        placeholder="MAX"
+                        :min="formState.heightRange[0]"
+                        :max="4000"
+                        class="flex-1"
+                        size="tiny"
+                        :show-button="false"
+                    />
+                  </div>
+                  <n-slider v-model:value="formState.heightRange" range :step="100" :max="4000" />
+                </div>
+              </div>
+
+              <div class="border rounded-md p-3 border-gray-100 dark:border-gray-800">
+                <div class="flex justify-between items-center mb-2">
+                  <label class="text-xs font-medium text-gray-500">文件大小 (MB)</label>
+                  <n-checkbox v-model:checked="formState.enableSize" size="small">启用</n-checkbox>
+                </div>
+                <div v-if="formState.enableSize">
+                  <div class="flex gap-2 mb-2">
+                    <n-input-number
+                        v-model:value="formState.sizeRange[0]"
+                        placeholder="MIN"
+                        :min="0"
+                        :max="formState.sizeRange[1]"
+                        class="flex-1"
+                        size="tiny"
+                        :show-button="false"
+                    />
+                    <span class="text-gray-400 self-center">-</span>
+                    <n-input-number
+                        v-model:value="formState.sizeRange[1]"
+                        placeholder="MAX"
+                        :min="formState.sizeRange[0]"
+                        :max="50"
+                        class="flex-1"
+                        size="tiny"
+                        :show-button="false"
+                    />
+                  </div>
+                  <n-slider v-model:value="formState.sizeRange" range :step="1" :max="50" />
+                </div>
+              </div>
+            </div>
 
             <n-form-item label="排序依据">
               <n-select v-model:value="formState.sortBy" :options="sortOptions"/>
