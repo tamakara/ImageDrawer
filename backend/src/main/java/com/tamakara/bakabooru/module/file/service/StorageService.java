@@ -42,7 +42,7 @@ public class StorageService {
             Path destinationFile = appPaths.getImageDir().resolve(hash).normalize().toAbsolutePath();
             Files.copy(pendingFile, destinationFile);
         } catch (Exception e) {
-            throw new RuntimeException("图片加密失败.", e);
+            throw new RuntimeException("图片存储失败.", e);
         }
     }
 

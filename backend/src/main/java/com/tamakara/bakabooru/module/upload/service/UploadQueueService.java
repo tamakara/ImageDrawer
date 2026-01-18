@@ -71,7 +71,7 @@ public class UploadQueueService {
 
     private void validateFile(MultipartFile file) {
         // 检查大小
-        long maxSize = systemSettingService.getLongSetting("upload.max-file-size", 52428800); // Default 50MB
+        long maxSize = systemSettingService.getLongSetting("upload.max-file-size", 52428800); // 默认 50MB
         if (file.getSize() > maxSize) {
             throw new RuntimeException("文件过大。最大允许: " + maxSize);
         }
