@@ -25,17 +25,5 @@ public class TagController {
         }
         return tagService.listTags();
     }
-
-    @PostMapping
-    @Operation(summary = "创建标签")
-    public TagDto createTag(@RequestBody TagDto tagDto) {
-        return tagService.createTag(tagDto);
-    }
-
-    @DeleteMapping("/{id}")
-    @Operation(summary = "删除标签")
-    public void deleteTag(@PathVariable Long id) {
-        tagService.deleteTag(id);
-    }
 }
 

@@ -30,6 +30,7 @@ import {
   TrashOutline
 } from '@vicons/ionicons5'
 import {galleryApi, type ImageDto, type TagDto} from '../../api/gallery.ts'
+import {tagsApi} from '../../api/tags.ts'
 import {useDateFormat} from '@vueuse/core'
 
 const props = defineProps<{
@@ -48,14 +49,13 @@ const image = ref<ImageDto | null>(null)
 const loading = ref(false)
 const editingName = ref(false)
 const newName = ref('')
-const addingTag = ref(false)
 const newTagName = ref('')
 const newTagType = ref('general')
 const regenerating = ref(false)
 const isEditingTags = ref(false)
 
 
-const tagTypeOrder = ['custom', 'copyright', 'character', 'artist', 'general', 'meta', 'rating']
+const tagTypeOrder = ['copyright', 'character', 'artist', 'general', 'meta', 'rating']
 
 const tagTypeMap: Record<string, string> = {
   custom: '自定义',
@@ -153,27 +153,26 @@ const handleRegenerate = async () => {
   }
 }
 
-const startAddTag = () => {
-  addingTag.value = true
-  newTagName.value = ''
-  newTagType.value = 'general'
-}
-
 const handleAddTag = async () => {
   if (!image.value || !newTagName.value.trim()) {
-    addingTag.value = false
     return
   }
+
   try {
+    const existingTags = await tagsApi.listTags(newTagName.value.trim())
+    if (existingTags.some(t => t.name === newTagName.value.trim())) {
+      message.error('添加失败：标签已存在')
+      return
+    }
+
     image.value = await galleryApi.addTag(image.value.id, {
       name: newTagName.value.trim(),
       type: newTagType.value
     })
     message.success('标签添加成功')
+    newTagName.value = ''
   } catch (e) {
     message.error('标签添加失败')
-  } finally {
-    addingTag.value = false
   }
 }
 
@@ -309,22 +308,10 @@ const getTagColor = (type: string) => {
                   <n-icon :component="RefreshOutline"/>
                 </template>
               </n-button>
-              <n-button
-                  size="tiny"
-                  secondary
-                  circle
-                  type="primary"
-                  @click="startAddTag"
-                  v-if="!addingTag"
-              >
-                <template #icon>
-                  <n-icon :component="AddOutline"/>
-                </template>
-              </n-button>
             </div>
           </div>
 
-          <div v-if="addingTag" class="mb-2">
+          <div v-if="isEditingTags" class="mb-2">
             <n-input-group>
               <n-select
                   v-model:value="newTagType"
@@ -342,11 +329,6 @@ const getTagColor = (type: string) => {
               <n-button size="small" type="primary" secondary @click="handleAddTag">
                 <template #icon>
                   <n-icon :component="AddOutline"/>
-                </template>
-              </n-button>
-              <n-button size="small" type="error" secondary @click="addingTag = false">
-                <template #icon>
-                  <n-icon :component="CloseOutline"/>
                 </template>
               </n-button>
             </n-input-group>
