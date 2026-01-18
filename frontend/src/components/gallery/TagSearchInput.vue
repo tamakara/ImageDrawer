@@ -77,7 +77,7 @@ async function handleUpdateValue(value: string) {
       }
     })
 
-    // 如果只有一个选项且完全匹配当前输入，则不显示建议
+    // 如果只有一个选项且完全匹配当前输入则不显示
     const firstOption = options[0]
     if (options.length === 1 && firstOption?.label === lastWord) {
       tagOptions.value = []

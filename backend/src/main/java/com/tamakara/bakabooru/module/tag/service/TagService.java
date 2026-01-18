@@ -25,20 +25,24 @@ public class TagService {
     }
 
     public List<TagDto> searchTags(String query) {
+        String lowerQuery = query.toLowerCase();
         return tagRepository.findByNameContainingIgnoreCase(query).stream()
+                .sorted((t1, t2) -> {
+                    String n1 = t1.getName().toLowerCase();
+                    String n2 = t2.getName().toLowerCase();
+                    boolean s1 = n1.startsWith(lowerQuery);
+                    boolean s2 = n2.startsWith(lowerQuery);
+
+                    if (s1 && !s2) {
+                        return -1;
+                    } else if (!s1 && s2) {
+                        return 1;
+                    } else {
+                        return Integer.compare(n1.length(), n2.length());
+                    }
+                })
                 .map(tagMapper::toDto)
                 .collect(Collectors.toList());
-    }
-
-    @Transactional
-    public TagDto createTag(TagDto tagDto) {
-        Tag tag = tagMapper.toEntity(tagDto);
-        return tagMapper.toDto(tagRepository.save(tag));
-    }
-
-    @Transactional
-    public void deleteTag(Long id) {
-        tagRepository.deleteById(id);
     }
 
     @Transactional
