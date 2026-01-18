@@ -113,6 +113,7 @@ function openDetail(image: any) {
 
 const sortOptions = [
   {label: '随机', value: 'RANDOM'},
+  {label: '查看次数', value: 'viewCount'},
   {label: '创建时间', value: 'createdAt'},
   {label: '修改时间', value: 'updatedAt'},
   {label: '文件大小', value: 'size'},

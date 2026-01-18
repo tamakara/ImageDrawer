@@ -16,6 +16,7 @@ public class ImageDto {
     private Integer width;
     private Integer height;
     private String hash;
+    private Long viewCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Set<TagDto> tags;

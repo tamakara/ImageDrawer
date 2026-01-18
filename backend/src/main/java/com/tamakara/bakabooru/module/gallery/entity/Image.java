@@ -39,6 +39,8 @@ public class Image {
     @Column(unique = true)
     private String hash;
 
+    private Long viewCount = 0L;
+
     @CreatedDate
     private LocalDateTime createdAt;
 

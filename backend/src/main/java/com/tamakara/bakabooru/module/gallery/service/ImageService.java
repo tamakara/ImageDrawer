@@ -15,16 +15,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,11 +43,15 @@ public class ImageService {
         return imageRepository.findAll(pageable).map(image -> imageMapper.toDto(image, signatureService));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ImageDto getImage(Long id) {
-        return imageRepository.findById(id)
-                .map(image -> imageMapper.toDto(image, signatureService))
+        Image image = imageRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("找不到图片"));
+
+        image.setViewCount(image.getViewCount() == null ? 1 : image.getViewCount() + 1);
+        imageRepository.save(image);
+
+        return imageMapper.toDto(image, signatureService);
     }
 
     @Transactional

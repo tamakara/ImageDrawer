@@ -18,6 +18,8 @@ export interface ImageDto {
   height: number
   /** 图片哈希值 (SHA256) */
   hash: string
+  /** 查看次数 */
+  viewCount: number
   createdAt: string
   updatedAt: string
   /** 原始图片访问URL */

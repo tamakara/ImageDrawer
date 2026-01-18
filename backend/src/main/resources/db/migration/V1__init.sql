@@ -28,12 +28,6 @@ CREATE TABLE image_tags
     FOREIGN KEY (tag_id) REFERENCES tags (id) ON DELETE CASCADE
 );
 
-CREATE TABLE tagger_settings
-(
-    setting_key   TEXT PRIMARY KEY,
-    setting_value TEXT
-);
-
 CREATE TABLE system_settings
 (
     setting_key   TEXT PRIMARY KEY,

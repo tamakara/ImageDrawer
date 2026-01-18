@@ -19,6 +19,7 @@ import {
   CloseOutline,
   DocumentTextOutline,
   DownloadOutline,
+  EyeOutline,
   HardwareChipOutline,
   ImageOutline,
   InformationCircleOutline,
@@ -371,6 +372,13 @@ const getTagColor = (type: string) => {
                     <n-icon :component="ResizeOutline"/> 尺寸
                  </span>
               <span class="text-gray-200 font-mono">{{ image.width }} × {{ image.height }}</span>
+            </div>
+            <!-- View Count -->
+            <div class="flex flex-col gap-1">
+                 <span class="text-gray-500 text-sm flex items-center gap-1">
+                    <n-icon :component="EyeOutline"/> 查看次数
+                 </span>
+              <span class="text-gray-200 font-mono">{{ image.viewCount || 0 }}</span>
             </div>
             <!-- File Size -->
             <div class="flex flex-col gap-1">
