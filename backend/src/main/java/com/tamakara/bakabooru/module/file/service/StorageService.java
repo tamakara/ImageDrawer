@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -55,24 +56,27 @@ public class StorageService {
     }
 
     public Path getThumbnailPath(String hash, int quality, int maxSize) {
-        try {
-            Path source = appPaths.getImageDir().resolve(hash);
-            Path target = appPaths.getThumbnailDir().resolve(hash + "_" + maxSize + "_" + quality + ".jpg");
+        Path source = appPaths.getImageDir().resolve(hash);
+        Path target = appPaths.getThumbnailDir().resolve(hash + "_" + maxSize + "_" + quality + ".jpg");
 
-            if (Files.exists(target)) {
-                return target;
-            }
+        if (Files.exists(target)) {
+            return target;
+        }
 
-            Thumbnails.of(source.toFile())
+        try (InputStream in = Files.newInputStream(source);
+             OutputStream out = Files.newOutputStream(target)) {
+
+            Thumbnails.of(in)
                     .size(maxSize, maxSize)
                     .outputQuality(quality / 100.0)
                     .outputFormat("jpg")
-                    .toFile(target.toFile());
+                    .toOutputStream(out);
 
-            return target;
         } catch (IOException e) {
             throw new RuntimeException("生成缩略图失败.", e);
         }
+
+        return target;
     }
 
     public void clearCache() {

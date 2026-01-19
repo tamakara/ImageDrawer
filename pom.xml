@@ -25,6 +25,9 @@
   <packaging>pom</packaging>
   <description>BaKaBooru</description>
   <inceptionYear>2025</inceptionYear>
+  <organization>
+    <name>Guangdong Polytechnic Normal University</name>
+  </organization>
 
   <url/>
   <licenses>

@@ -28,6 +28,7 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+
   # 文件上传限制
   servlet:
     multipart:

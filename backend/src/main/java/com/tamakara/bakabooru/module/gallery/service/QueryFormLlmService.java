@@ -35,20 +35,20 @@ public class QueryFormLlmService {
         List<String> availableTags = tagService.listTags().stream().map(TagDto::getName).toList();
 
         ChatRequestDto request = getChatRequestDto(userInput, availableTags, llmModel);
-
-        ChatResponseDto response = webClient.post()
-                .uri(llmUrl)
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + llmApiKey)
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(ChatResponseDto.class)
-                .block();
         try {
+            ChatResponseDto response = webClient.post()
+                    .uri(llmUrl)
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + llmApiKey)
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(ChatResponseDto.class)
+                    .block();
+
             String llmOutput = response.getChoices().get(0).getMessage().getContent();
             return objectMapper.readValue(extractJson(llmOutput), SearchRequestDto.class);
         } catch (Exception e) {
-            throw new RuntimeException("无法解析JSON", e);
+            throw new RuntimeException("调用模型失败", e);
         }
     }
 

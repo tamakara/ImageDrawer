@@ -185,12 +185,12 @@
               <jar>${project.build.directory}/${project.build.finalName}.jar</jar>
               <jre>
                 <path>jre</path>
-                <bundledJre64Bit>true</bundledJre64Bit>
+                <requires64Bit>true</requires64Bit>
                 <minVersion>21</minVersion>
                 <opts>
                   <opt>-Dfile.encoding=UTF-8</opt>
-                  <opt>-Xms128m</opt>
-                  <opt>-Xmx512m</opt>
+                  <opt>-Xms512m</opt>
+                  <opt>-Xmx2g</opt>
                 </opts>
               </jre>
             </configuration>
