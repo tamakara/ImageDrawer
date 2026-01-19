@@ -18,6 +18,10 @@ public class TagService {
     private final TagRepository tagRepository;
     private final TagMapper tagMapper;
 
+    public boolean existsTag(String tag) {
+        return tagRepository.existsByName(tag);
+    }
+
     public List<TagDto> listTags() {
         return tagRepository.findAll().stream()
                 .map(tagMapper::toDto)

@@ -145,8 +145,11 @@ const {
       heightMin: activeSearchState.value.heightMin ?? undefined,
       heightMax: activeSearchState.value.heightMax ?? undefined,
       sizeMin: activeSearchState.value.sizeMin ? activeSearchState.value.sizeMin * 1024 * 1024 : undefined,
-      sizeMax: activeSearchState.value.sizeMax ? activeSearchState.value.sizeMax * 1024 * 1024 : undefined
-    }, page.value - 1, pageSize.value, sort)
+      sizeMax: activeSearchState.value.sizeMax ? activeSearchState.value.sizeMax * 1024 * 1024 : undefined,
+      page: page.value - 1,
+      size: pageSize.value,
+      sort: sort
+    })
   }
 })
 

@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,11 +31,29 @@ public class SearchService {
     private final SignatureService signatureService;
 
     @Transactional(readOnly = true)
-    public Page<ImageDto> search(SearchRequestDto request, Pageable pageable) {
-        boolean isRandomSort = pageable.getSort().stream().anyMatch(o -> "RANDOM".equals(o.getProperty()));
+    public Page<ImageDto> search(SearchRequestDto request) {
+        int page = (request.getPage() != null && request.getPage() >= 0) ? request.getPage() : 0;
+        int size = (request.getSize() != null && request.getSize() > 0) ? request.getSize() : 20;
+
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        if (hasText(request.getSort())) {
+            String[] parts = request.getSort().split(",");
+            if (parts.length > 0) {
+                String property = parts[0].trim();
+                Sort.Direction direction = Sort.Direction.DESC;
+                if (parts.length > 1 && "ASC".equalsIgnoreCase(parts[1].trim())) {
+                    direction = Sort.Direction.ASC;
+                }
+                if (!property.isEmpty()) {
+                    sort = Sort.by(direction, property);
+                }
+            }
+        }
+
+        boolean isRandomSort = sort.stream().anyMatch(o -> "RANDOM".equals(o.getProperty()));
         Pageable effectivePageable = isRandomSort
-                ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
-                : pageable;
+                ? PageRequest.of(page, size)
+                : PageRequest.of(page, size, sort);
 
         Specification<Image> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -85,7 +104,7 @@ public class SearchService {
             }
 
             // 随机排序
-            if (isRandomSort && Long.class != query.getResultType()) {
+            if (isRandomSort && query != null && Long.class != query.getResultType()) {
                 if (hasText(request.getRandomSeed())) {
                     // 使用确定性算法实现一致性随机: (id * seed) % MAX_INT
                     long seedVal = request.getRandomSeed().hashCode();

@@ -11,17 +11,14 @@ export interface SearchRequestDto {
   heightMax?: number
   sizeMin?: number
   sizeMax?: number
+  page?: number
+  size?: number
+  sort?: string
 }
 
 export const searchApi = {
-  search: async (request: SearchRequestDto, page: number, size: number, sort?: string) => {
-    const params: any = { page, size }
-    if (sort) {
-      params.sort = sort
-    }
-    const response = await apiClient.post<Page<ImageDto>>('/search', request, {
-      params
-    })
+  search: async (request: SearchRequestDto) => {
+    const response = await apiClient.post<Page<ImageDto>>('/search', request)
     return response.data
   },
 
