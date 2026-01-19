@@ -16,4 +16,12 @@ public class ChatRequestDto {
         private String role;
         private String content;
     }
+
+    public ChatRequestDto(String systemPrompt, String userPrompt, String model) {
+        this.model = model;
+        this.messages = List.of(
+                new ChatRequestDto.Message("system", systemPrompt),
+                new ChatRequestDto.Message("user", userPrompt)
+        );
+    }
 }

@@ -37,6 +37,6 @@ public class SearchController {
         if (query == null || query.isBlank()) {
             throw new IllegalArgumentException("Query cannot be empty");
         }
-        return queryFormLlmService.parseQuery(query);
+        return queryFormLlmService.parseSearchConfig(query);
     }
 }
