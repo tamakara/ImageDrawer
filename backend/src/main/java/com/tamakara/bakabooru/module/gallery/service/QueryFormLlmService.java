@@ -8,14 +8,17 @@ import com.tamakara.bakabooru.module.gallery.dto.SearchRequestDto;
 import com.tamakara.bakabooru.module.system.service.SystemSettingService;
 import com.tamakara.bakabooru.module.tag.service.TagService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.StringJoiner;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class QueryFormLlmService {
@@ -25,139 +28,128 @@ public class QueryFormLlmService {
     private final SystemSettingService systemSettingService;
     private final ObjectMapper objectMapper;
 
+    // 解析用户输入并生成标准的搜索配置对象
     public SearchRequestDto parseSearchConfig(String userInput) {
         String llmUrl = systemSettingService.getSetting("llm.url", "");
         String llmModel = systemSettingService.getSetting("llm.model", "");
         String llmApiKey = systemSettingService.getSetting("llm.api-key", "");
 
-        if ("".equals(llmUrl) || "".equals(llmModel) || "".equals(llmApiKey))
+        if (!StringUtils.hasText(llmUrl) || !StringUtils.hasText(llmModel) || !StringUtils.hasText(llmApiKey)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "未完成LLM配置，请在设置中配置 LLM");
-
-        SearchRequestDto searchRequestDto = parseQuery(userInput, llmUrl, llmModel, llmApiKey);
-        String tagSearch = filterTags(searchRequestDto.getTagSearch(), llmUrl, llmModel, llmApiKey);
-        searchRequestDto.setTagSearch(tagSearch);
-        return searchRequestDto;
-
-    }
-
-    public SearchRequestDto parseQuery(String userInput, String llmUrl, String llmModel, String llmApiKey) {
-        String systemPrompt = """
-                    你是一个查询条件解析器。
-                    你的任务：把用户输入的自然语言查询条件转成特定格式的 JSON 对象。
-                    生成 JSON 格式：
-                     {
-                        "tagSearch": string | null,
-                         "keyword": string | null,
-                        "randomSeed": string | null,
-                        "widthMin": number | null,
-                        "widthMax": number | null,
-                        "heightMin": number | null,
-                        "heightMax": number | null,
-                        "sizeMin": number | null,
-                        "sizeMax": number | null,
-                        "page": number | null,
-                        "size": number | null,
-                        "sort": string | null
-                     }
-                    说明：
-                    - tagSearch: 标签搜索字符串。多个标签用空格分隔，排除标签用前缀 '-'。例如 "blue_eyes -red_hair"。你需要从输入文本中提取所有描述图片特征的关键词提取出来，然后为每个关键词生成尽可能多的意思完全相同的标签供我与数据库进行匹配，不能生成与关键词不同意或者近义的标签，标签格式参考danbooru的标签系统。
-                    - keyword: 标题或文件名关键字。只有当输入特别说明是标题或者文件名时才添加到这里。
-                    - randomSeed: 随机种子字符串，如果用户想要随机结果时生成一个。
-                    - widthMin/Max, heightMin/Max: 尺寸范围。
-                    - sizeMin/Max: 文件大小范围（字节）。
-                    - page: 分页查询页码。
-                    - size: 分页查询每页大小。
-                    - sort: 查询结果排序方式。结构"排序方式,排序方向"，排序方式只能是：RANDOM（随机）、viewCount（查看次数）、createdAt（创建日期）、updatedAt（修改日期）、size（文件大小）、title（标题、文件名），排序发现1只能是：ASC（升序）、DESC（降序）。
-                    要求：
-                    确保生成的JSON数据结构清晰、易于解析和使用。生成的JSON结构为JSON纯文本，不要输出代码块，JSON当中没有换行符。
-                """;
-
-        String userPrompt = "\n用户输入: " + userInput;
-
-        try {
-            ChatRequestDto request = new ChatRequestDto(systemPrompt, userPrompt, llmModel);
-
-            ChatResponseDto response = webClient.post()
-                    .uri(llmUrl)
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + llmApiKey)
-                    .bodyValue(request)
-                    .retrieve()
-                    .bodyToMono(ChatResponseDto.class)
-                    .block();
-
-            String llmOutput = response.getChoices().get(0).getMessage().getContent();
-            SearchRequestDto searchRequestDto = objectMapper.readValue(extractJson(llmOutput), SearchRequestDto.class);
-            return searchRequestDto;
-
-        } catch (Exception e) {
-            throw new RuntimeException("调用模型失败", e);
         }
+
+        // 1. 解析查询条件
+        SearchRequestDto searchRequestDto = parseQuery(userInput, llmUrl, llmModel, llmApiKey);
+
+        // 2. 标签同义词扩展与过滤
+        if (StringUtils.hasText(searchRequestDto.getTagSearch())) {
+            String optimizedTags = expandAndFilterTags(searchRequestDto.getTagSearch(), llmUrl, llmModel, llmApiKey);
+            searchRequestDto.setTagSearch(optimizedTags);
+        }
+
+        return searchRequestDto;
     }
 
-    private String filterTags(String tagSearch, String llmUrl, String llmModel, String llmApiKey) {
+    // 调用 LLM 将自然语言转换为 SearchRequestDto
+    private SearchRequestDto parseQuery(String userInput, String llmUrl, String llmModel, String llmApiKey) {
         String systemPrompt = """
-                    为每个该字符串内每个关键词生成一个标签数组，数组内是所有与该关键词同义的标签，标签风格可以是日语罗马字，也可以是全英语，可以参考Danbooru的标签风格。如果关键词前有-符号，则生成的每个标签前都要添加-符号。
-                    例如对于输入关键词：关键词1 -关键词2
-                    输出JSON：
-                    [
-                        ["同义词1","同义词2"...],
-                        ["-同义词1","-同义词2"...],
-                        ...
-                    ]
-                    要求：
-                    确保生成的JSON数据结构清晰、易于解析和使用。生成的JSON结构为JSON纯文本，不要输出代码块，JSON当中没有换行符。
+                你是一个专业的查询解析助手。你的任务是将用户的自然语言查询转换为以下JSON格式的结构化查询对象。
+                
+                目标 JSON 结构：
+                {
+                   "tagSearch": "string | null", // 提取图片视觉特征标签（如: 'blue_eyes -red_hair'），空格分隔，排除项加前缀'-'。去除冗余词，保留最精准的标签。
+                   "keyword": "string | null",   // 仅当明确指定要匹配'标题'或'文件名'时填写。
+                   "randomSeed": "string | null",// 若用户明确请求随机结果，则生成随机字符串种子。
+                   "widthMin": number, "widthMax": number,    // 宽度范围
+                   "heightMin": number, "heightMax": number,  // 高度范围
+                   "sizeMin": number, "sizeMax": number,      // 文件大小范围（字节）
+                   "page": number, "size": number,            // 分页参数
+                   "sort": "string | null"       // 格式: "字段,方向"。字段: RANDOM, viewCount, createdAt, updatedAt, size, title。方向: ASC, DESC。
+                }
+                
+                要求：
+                1. 理解用户意图，准确提取数值范围、标签和排序要求。
+                2. tagSearch中每个词应为独立的视觉标签，同义词只需保留一个最准确的。
+                3. 仅输出纯JSON文本，严禁包含Markdown代码块或换行符。
                 """;
 
-        String userPrompt = "\n用户输入: " + tagSearch;
+        return callLlmApi(llmUrl, llmModel, llmApiKey, systemPrompt, "用户输入: " + userInput, new TypeReference<>() {
+        });
+    }
+
+    // 调用 LLM 获取标签同义词，并根据数据库存在的标签进行过滤
+    private String expandAndFilterTags(String tagSearch, String llmUrl, String llmModel, String llmApiKey) {
+        String systemPrompt = """
+                你是一个标签同义词扩展专家。请为输入的每个关键词（空格分隔）生成对应的 Danbooru 风格标签同义词列表。
+                
+                输入示例：关键词1 -关键词2
+                输出格式（JSON二维数组）：
+                [
+                    ["同义词1A", "同义词1B", ...],    // 对应 关键词1
+                    ["-同义词2A", "-同义词2B", ...]   // 对应 -关键词2 (必须保留排除前缀'-')
+                ]
+                
+                要求：
+                1. 能够识别多语言关键词并转换为标准的 Danbooru 风格标签（通常为英文）。
+                2. 数组顺序必须严格对应输入的关键词顺序。
+                3. 仅输出纯JSON文本，严禁包含Markdown代码块或换行符。
+                """;
 
         try {
-            ChatRequestDto request = new ChatRequestDto(systemPrompt, userPrompt, llmModel);
+            List<List<String>> tagGroups = callLlmApi(llmUrl, llmModel, llmApiKey, systemPrompt, "用户输入: " + tagSearch, new TypeReference<>() {
+            });
 
-            ChatResponseDto response = webClient.post()
-                    .uri(llmUrl)
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + llmApiKey)
-                    .bodyValue(request)
-                    .retrieve()
-                    .bodyToMono(ChatResponseDto.class)
-                    .block();
+            if (tagGroups == null || tagGroups.isEmpty()) {
+                return tagSearch;
+            }
 
-            String llmOutput = response.getChoices().get(0).getMessage().getContent();
-            List<List<String>> tagss = objectMapper.readValue(
-                    extractJson(llmOutput),
-                    new TypeReference<List<List<String>>>() {
-                    }
-            );
+            log.debug("Original tags: [{}], Expanded groups: {}", tagSearch, tagGroups);
 
-            // 筛选可用标签
             StringJoiner validTagSearch = new StringJoiner(" ");
-            for (List<String> tags : tagss) {
-                for (String tag : tags) {
-                    if (tagService.existsTag(tag.startsWith("-") ? tag.substring(1) : tag)) {
-                        validTagSearch.add(tag);
-                        break;
+            for (List<String> synonyms : tagGroups) {
+                for (String tag : synonyms) {
+                    // 检查标签是否存在 (去掉可能的排除前缀 '-')
+                    boolean isExcluded = tag.startsWith("-");
+                    String cleanTag = isExcluded ? tag.substring(1) : tag;
+
+                    if (tagService.existsTag(cleanTag)) {
+                        validTagSearch.add(tag); // 添加完整标签（含前缀）
+                        break; // 每个关键词只取第一个匹配到的有效标签
                     }
                 }
             }
-
             return validTagSearch.toString();
 
         } catch (Exception e) {
-            throw new RuntimeException("调用模型失败", e);
+            log.error("标签扩展失败，使用原始标签: {}", tagSearch, e);
+            return tagSearch;
         }
     }
 
-    private String extractJson(String content) {
-        content = content.trim();
-        if (content.startsWith("```json")) {
-            content = content.substring(7);
-        } else if (content.startsWith("```")) {
-            content = content.substring(3);
+    // 通用 LLM 调用封装
+    private <T> T callLlmApi(String url, String model, String apiKey, String systemPrompt, String userPrompt, TypeReference<T> responseType) {
+        try {
+            ChatRequestDto request = new ChatRequestDto(systemPrompt, userPrompt, model);
+
+            ChatResponseDto response = webClient.post()
+                    .uri(url)
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + apiKey)
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(ChatResponseDto.class)
+                    .block();
+
+            if (response == null || response.getChoices() == null || response.getChoices().isEmpty()) {
+                throw new RuntimeException("LLM 响应为空");
+            }
+
+            String content = response.getChoices().get(0).getMessage().getContent();
+            return objectMapper.readValue(content, responseType);
+
+        } catch (Exception e) {
+            log.error("LLM 调用异常: {}", e.getMessage());
+            throw new RuntimeException("调用模型失败: " + e.getMessage(), e);
         }
-        if (content.endsWith("```")) {
-            content = content.substring(0, content.length() - 3);
-        }
-        return content.trim();
     }
 }
