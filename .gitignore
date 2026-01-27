@@ -82,9 +82,9 @@ lerna-debug.log*
 /.idea/
 /frontend/node/
 /tagger/build/tagger/
-/launcher/web/web.exe
-/launcher/tagger/tagger.exe
+/launcher/ai/**
+/launcher/web/**
+/launcher/tagger/
 /tagger/build/
 /launcher/build/
 /bakabooru.exe
-

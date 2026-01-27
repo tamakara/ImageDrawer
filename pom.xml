@@ -12,9 +12,8 @@
   </parent>
 
   <modules>
-    <module>frontend</module>
-    <module>backend</module>
-    <module>tagger</module>
+    <module>web</module>
+    <module>ai</module>
     <module>launcher</module>
   </modules>
 

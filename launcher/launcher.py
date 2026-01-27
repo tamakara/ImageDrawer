@@ -12,8 +12,8 @@ import argparse
 parser = argparse.ArgumentParser(description="BaKaBooru Launcher")
 parser.add_argument("--web-host", default="0.0.0.0", help="Web service host")
 parser.add_argument("--web-port", default="8080", help="Web service port")
-parser.add_argument("--tagger-host", default="0.0.0.0", help="Tagger service host")
-parser.add_argument("--tagger-port", default="8081", help="Tagger service port")
+parser.add_argument("--ai-host", default="0.0.0.0", help="AI service host")
+parser.add_argument("--ai-port", default="8081", help="AI service port")
 args = parser.parse_args()
 
 # ---------------------------------
@@ -39,20 +39,20 @@ def stream_logs(prefix, proc, log_file):
 
 
 # ---------------------------------
-# 启动 Tagger 服务器
+# 启动 AI 服务器
 # ---------------------------------
-tagger_exe = BASE_DIR / "tagger" / "tagger.exe"
-if not tagger_exe.exists():
-    raise FileNotFoundError(f"找不到 tagger.exe: {tagger_exe}")
+ai_exe = BASE_DIR / "ai" / "ai.exe"
+if not ai_exe.exists():
+    raise FileNotFoundError(f"找不到 ai.exe: {ai_exe}")
 
-tagger_proc = subprocess.Popen(
+ai_proc = subprocess.Popen(
     [
-        str(tagger_exe),
+        str(ai_exe),
         f"--data_dir={str(DATA_DIR)}",
-        f"--host={args.tagger_host}",
-        f"--port={args.tagger_port}",
+        f"--host={args.ai_host}",
+        f"--port={args.ai_port}",
     ],
-    cwd=str(tagger_exe.parent),
+    cwd=str(ai_exe.parent),
     stdout=subprocess.PIPE,
     stderr=subprocess.STDOUT,
     text=True,
@@ -61,11 +61,11 @@ tagger_proc = subprocess.Popen(
 
 threading.Thread(
     target=stream_logs,
-    args=("TAGGER", tagger_proc, LOG_DIR / "tagger.log"),
+    args=("AI", ai_proc, LOG_DIR / "ai.log"),
     daemon=True
 ).start()
 
-print("✅ Tagger 服务器运行中...")
+print("✅ AI 服务器运行中...")
 
 # ---------------------------------
 # 启动 Web 服务器
@@ -80,7 +80,7 @@ web_proc = subprocess.Popen(
         f'--server.address={args.web_host}',
         f'--server.port={args.web_port}',
         f'--app.data-dir={str(DATA_DIR)}',
-        f'--app.tagger.url=http://{args.tagger_host}:{args.tagger_port}/tag',
+        f'--app.ai.url=http://{args.ai_host}:{args.ai_port}/tag',
     ],
     cwd=str(web_exe.parent),
     stdout=subprocess.PIPE,
@@ -105,5 +105,5 @@ try:
         time.sleep(1)
 except KeyboardInterrupt:
     print("🛑 正在关闭服务...")
-    tagger_proc.terminate()
+    ai_proc.terminate()
     web_proc.terminate()
