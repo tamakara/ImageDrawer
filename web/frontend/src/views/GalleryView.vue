@@ -414,7 +414,7 @@ async function handleBatchDownload() {
                 size="small"
                 class="mt-2"
                 @click="handleQueryParse"
-                :loading="isLlmParsing"
+                :loading="isQueryParsing"
                 :disabled="!query"
             >
               <template #icon>
