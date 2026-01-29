@@ -1,4 +1,4 @@
-package com.tamakara.bakabooru.module.tag.dto;
+package com.tamakara.bakabooru.module.ai.dto;
 
 import lombok.Data;
 
@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-public class TaggerResponseDto {
+public class TagImageResponseDto {
     private boolean success;
     private Map<String, List<String>> data;
     private String error;

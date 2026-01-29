@@ -88,6 +88,16 @@ public class SystemSettingService {
         }
     }
 
+    public double getDoubleSetting(String key, double defaultValue) {
+        String val = settingsCache.get(key);
+        if (val == null) return defaultValue;
+        try {
+            return Double.parseDouble(val);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
     @Transactional
     public void updateSettings(Map<String, String> newSettings) {
         for (Map.Entry<String, String> entry : newSettings.entrySet()) {

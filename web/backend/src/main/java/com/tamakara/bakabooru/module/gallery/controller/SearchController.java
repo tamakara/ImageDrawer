@@ -2,7 +2,7 @@ package com.tamakara.bakabooru.module.gallery.controller;
 
 import com.tamakara.bakabooru.module.gallery.dto.ImageDto;
 import com.tamakara.bakabooru.module.gallery.dto.SearchRequestDto;
-import com.tamakara.bakabooru.module.gallery.service.QueryFormLlmService;
+import com.tamakara.bakabooru.module.gallery.service.QueryParseService;
 import com.tamakara.bakabooru.module.gallery.service.SearchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,7 +22,7 @@ import java.util.Map;
 public class SearchController {
 
     private final SearchService searchService;
-    private final QueryFormLlmService queryFormLlmService;
+    private final QueryParseService queryParseService;
 
     @PostMapping
     @Operation(summary = "搜索图片", description = "使用标签进行高级搜索")
@@ -30,13 +30,12 @@ public class SearchController {
         return searchService.search(request);
     }
 
-    @PostMapping("/parse-llm")
+    @PostMapping("/parse")
     @Operation(summary = "智能解析配置", description = "使用 LLM 解析自然语言并返回搜索配置")
-    public SearchRequestDto parseSearchConfig(@RequestBody Map<String, String> body) {
-        String query = body.get("query");
+    public String queryParse(@RequestBody  String query) {
         if (query == null || query.isBlank()) {
             throw new IllegalArgumentException("Query cannot be empty");
         }
-        return queryFormLlmService.parseSearchConfig(query);
+        return queryParseService.queryParse(query);
     }
 }

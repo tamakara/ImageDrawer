@@ -1,15 +1,15 @@
-# from fastapi import APIRouter
-# from schemas.search import QueryParseRequest, QueryParseResponse
-# from workflows.query_parsing import query_parsing_workflow
-#
-# router = APIRouter()
-#
-#
-# @router.post("/parse", response_model=QueryParseResponse)
-# def parse_query(request: QueryParseRequest):
-#     """
-#     Input: user natural language query
-#     Output: structured search condition JSON
-#     """
-#     search_condition = query_parsing_workflow(request.query)
-#     return QueryParseResponse(search_condition=search_condition)
+from fastapi import APIRouter
+from schema.query_parse import QueryParseRequest
+from services.query_parse import query_parse
+
+router = APIRouter()
+
+
+@router.post("/query_parse", response_model=str)
+def parse_query(request: QueryParseRequest):
+    return query_parse(
+        query=request.query,
+        llm_url=request.llm_url,
+        llm_model=request.llm_model,
+        llm_api_key=request.llm_api_key,
+    )

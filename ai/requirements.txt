@@ -10,3 +10,7 @@ pydantic
 hf_xet
 pydantic-settings
 pyinstaller
+langchain-community
+langchain-core
+sentence-transformers
+faiss-cpu

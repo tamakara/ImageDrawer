@@ -9,7 +9,6 @@ import com.tamakara.bakabooru.module.gallery.repository.ImageRepository;
 import com.tamakara.bakabooru.module.tag.dto.TagDto;
 import com.tamakara.bakabooru.module.tag.entity.Tag;
 import com.tamakara.bakabooru.module.tag.service.TagService;
-import com.tamakara.bakabooru.module.tag.service.TaggerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,7 +34,6 @@ public class ImageService {
     private final ImageMapper imageMapper;
     private final StorageService storageService;
     private final TagService tagService;
-    private final TaggerService taggerService;
     private final SignatureService signatureService;
 
     @Transactional(readOnly = true)
@@ -83,7 +81,7 @@ public class ImageService {
                 .orElseThrow(() -> new RuntimeException("找不到图片"));
 
         // 生成标签
-        Map<String, List<String>> newTagsMap = taggerService.tagImage("image/" + image.getHash());
+        Map<String, List<String>> newTagsMap = tagService.tagImage("image/" + image.getHash());
 
         // 保留自定义标签
         Set<Tag> tagsToKeep = image.getTags().stream()

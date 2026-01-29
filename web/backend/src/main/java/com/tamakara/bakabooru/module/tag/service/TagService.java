@@ -1,5 +1,9 @@
 package com.tamakara.bakabooru.module.tag.service;
 
+import com.tamakara.bakabooru.module.ai.dto.TagImageRequestDto;
+import com.tamakara.bakabooru.module.ai.dto.TagImageResponseDto;
+import com.tamakara.bakabooru.module.ai.service.AiService;
+import com.tamakara.bakabooru.module.system.service.SystemSettingService;
 import com.tamakara.bakabooru.module.tag.dto.TagDto;
 import com.tamakara.bakabooru.module.tag.entity.Tag;
 import com.tamakara.bakabooru.module.tag.mapper.TagMapper;
@@ -9,18 +13,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class TagService {
 
+    private final SystemSettingService systemSettingService;
+    private final AiService aiService;
     private final TagRepository tagRepository;
     private final TagMapper tagMapper;
-
-    public boolean existsTag(String tag) {
-        return tagRepository.existsByName(tag);
-    }
 
     public List<TagDto> listTags() {
         return tagRepository.findAll().stream()
@@ -58,5 +61,19 @@ public class TagService {
                     tag.setType(type);
                     return tagRepository.save(tag);
                 });
+    }
+
+    public Map<String, List<String>> tagImage(String imagePath) {
+        double threshold = systemSettingService.getDoubleSetting("tag.threshold", 0.61);
+        TagImageRequestDto requestBody = new TagImageRequestDto();
+        requestBody.setImagePath(imagePath);
+        requestBody.setThreshold(threshold);
+
+        try {
+            TagImageResponseDto response = aiService.tagImage(requestBody);
+            return response.getData();
+        } catch (Exception e) {
+            throw new RuntimeException("标签生成失败: " + e.getMessage());
+        }
     }
 }

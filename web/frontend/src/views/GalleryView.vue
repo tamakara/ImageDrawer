@@ -55,30 +55,19 @@ const formState = reactive({
   sizeMax: null as number | null  // MB
 })
 
-const llmQuery = ref('')
-const isLlmParsing = ref(false)
+const query = ref('')
+const isQueryParsing = ref(false)
 
-async function handleParseConfig() {
-  if (!llmQuery.value.trim()) return
+async function handleQueryParse() {
+  if (!query.value.trim()) return
   try {
-    isLlmParsing.value = true
-    const dto = await searchApi.parseLlm(llmQuery.value)
-
-    if (dto.keyword) formState.keyword = dto.keyword
-    if (dto.tagSearch) formState.tagSearch = dto.tagSearch
-
-    formState.widthMin = dto.widthMin ?? null
-    formState.widthMax = dto.widthMax ?? null
-    formState.heightMin = dto.heightMin ?? null
-    formState.heightMax = dto.heightMax ?? null
-    formState.sizeMin = dto.sizeMin ? Math.floor(dto.sizeMin / 1024 / 1024) : null
-    formState.sizeMax = dto.sizeMax ? Math.ceil(dto.sizeMax / 1024 / 1024) : null
-
+    isQueryParsing.value = true
+    formState.tagSearch = await searchApi.queryParse(query.value)
     message.success('配置已更新，请点击搜索')
   } catch (e: any) {
     message.error('解析失败: ' + (e.message || '未知错误'))
   } finally {
-    isLlmParsing.value = false
+    isQueryParsing.value = false
   }
 }
 
@@ -119,7 +108,7 @@ function handleReset() {
   formState.heightMax = null
   formState.sizeMin = null
   formState.sizeMax = null
-  llmQuery.value = ''
+  query.value = ''
   handleSearch()
 }
 
@@ -410,12 +399,12 @@ async function handleBatchDownload() {
           <div class="mb-5">
             <label class="text-xs font-medium text-gray-500 mb-1 block">智能解析配置</label>
             <n-input
-                v-model:value="llmQuery"
+                v-model:value="query"
                 placeholder="在此描述想要查找的图片特征（如：高分辨率的风景图），AI 将自动解析并填充下方的搜索表单..."
                 type="textarea"
                 :autosize="{ minRows: 4, maxRows: 4 }"
                 size="small"
-                @keydown.ctrl.enter="handleParseConfig"
+                @keydown.ctrl.enter="handleQueryParse"
             />
             <n-button
                 type="primary"
@@ -424,13 +413,13 @@ async function handleBatchDownload() {
                 dashed
                 size="small"
                 class="mt-2"
-                @click="handleParseConfig"
+                @click="handleQueryParse"
                 :loading="isLlmParsing"
-                :disabled="!llmQuery"
+                :disabled="!query"
             >
               <template #icon>
                 <n-icon>
-                  <FlashOutline />
+                  <FlashOutline/>
                 </n-icon>
               </template>
               智能解析配置

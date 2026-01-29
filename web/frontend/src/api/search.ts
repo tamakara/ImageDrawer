@@ -22,8 +22,8 @@ export const searchApi = {
     return response.data
   },
 
-  parseLlm: async (query: string): Promise<SearchRequestDto> => {
-    const response = await apiClient.post<SearchRequestDto>('/search/parse-llm', { query })
+  queryParse: async (query: string): Promise<string> => {
+    const response = await apiClient.post<string>('/search/parse', { query })
     return response.data
   }
 }

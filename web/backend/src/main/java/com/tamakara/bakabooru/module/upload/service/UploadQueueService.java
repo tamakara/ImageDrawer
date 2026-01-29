@@ -4,13 +4,13 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.jpeg.JpegDirectory;
 import com.tamakara.bakabooru.module.file.service.StorageService;
+import com.tamakara.bakabooru.module.tag.service.TagService;
 import com.tamakara.bakabooru.utils.FileUtils;
 import com.tamakara.bakabooru.module.gallery.entity.Image;
 import com.tamakara.bakabooru.module.gallery.repository.ImageRepository;
 import com.tamakara.bakabooru.module.tag.entity.Tag;
 import com.tamakara.bakabooru.module.tag.repository.TagRepository;
 import com.tamakara.bakabooru.module.system.service.SystemSettingService;
-import com.tamakara.bakabooru.module.tag.service.TaggerService;
 import com.tamakara.bakabooru.module.upload.model.UploadTask;
 import com.tamakara.bakabooru.module.upload.model.UploadTaskStore;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ import java.util.*;
 public class UploadQueueService {
 
     private final StorageService storageService;
-    private final TaggerService taggerService;
+    private final TagService tagService;
     private final ImageRepository imageRepository;
     private final TagRepository tagRepository;
     private final SystemSettingService systemSettingService;
@@ -108,8 +108,8 @@ public class UploadQueueService {
         if (task.isEnableTagging()) {
             updateStatus(task, UploadTask.UploadStatus.TAGGING);
             try {
-                // 调用 TaggerService 获取标签
-                Map<String, List<String>> tagData = taggerService.tagImage("temp/pending/" + taskId);
+                // 调用 AIService 获取标签
+                Map<String, List<String>> tagData = tagService.tagImage("temp/pending/" + taskId);
 
                 // 将 TagData 转换为实体
                 for (String tagType : tagData.keySet()) {

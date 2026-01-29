@@ -3,9 +3,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.api import image_tag, query_parse
+from app.api import tag_image, query_parse
 from config.settings import settings
-from core.model_loader import load_model_and_metadata
+from services.tag_matcher import TagMatcher
+from services.camie_tagger import CamieTagger
 
 
 @asynccontextmanager
@@ -14,28 +15,36 @@ async def lifespan(app: FastAPI):
         print("错误: 未指定数据目录。请设置 DATA_DIR。")
         sys.exit(1)
 
-    print("正在加载模型...")
-    model_path, model_metadata = load_model_and_metadata()
+    try:
+        settings.tagger = CamieTagger(
+            device="cpu",
+            cache_dir=settings.model_dir
+        )
 
-    if not model_path:
-        print("错误: 模型不可用。")
+        model_dir = settings.model_dir
+        index_dir = settings.index_dir
+        official_tags = settings.tagger.tag_to_category.keys()
+
+        settings.matcher = TagMatcher(
+            index_dir=index_dir,
+            valid_tags=official_tags,
+            cache_dir=model_dir
+        )
+    except Exception as e:
+        print(f"模型加载失败: {e}")
         sys.exit(1)
 
-    settings.onnx_model_path = model_path
-    settings.onnx_model_metadata = model_metadata
-
-    print("模型加载完成。")
     yield
-    print("正在关闭 AI 服务...")
 
+    print("正在关闭 AI 服务...")
 
 app = FastAPI(
     title="BaKaBooru AI Service",
     lifespan=lifespan
 )
 
-app.include_router(image_tag.router, tags=["Image Tagging"])
-# app.include_router(query_parse.router,  tags=["Query Parsing"])
+app.include_router(tag_image.router, tags=["Image Tagging"])
+app.include_router(query_parse.router, tags=["Query Parsing"])
 
 
 @app.get("/health")
