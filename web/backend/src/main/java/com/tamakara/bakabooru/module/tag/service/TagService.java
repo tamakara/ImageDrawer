@@ -63,6 +63,10 @@ public class TagService {
                 });
     }
 
+    public Tag findTag(String name) {
+        return tagRepository.findByName(name).orElse(null);
+    }
+
     public Map<String, List<String>> tagImage(String imagePath) {
         double threshold = systemSettingService.getDoubleSetting("tag.threshold", 0.61);
         TagImageRequestDto requestBody = new TagImageRequestDto();

@@ -105,7 +105,10 @@ public class ImageService {
         Image image = imageRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("找不到图片"));
 
-        Tag tag = tagService.findOrCreateTag(tagDto.getName(),  tagDto.getType());
+        Tag tag = tagService.findTag(tagDto.getName());
+        if (tag == null) {
+            throw new RuntimeException("标签不存在，无法添加: " + tagDto.getName());
+        }
         image.getTags().add(tag);
         image.setUpdatedAt(LocalDateTime.now());
 

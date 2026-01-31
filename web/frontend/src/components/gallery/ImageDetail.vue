@@ -9,10 +9,11 @@ import {
   NInputGroup,
   NModal,
   NPopconfirm,
-  NSelect,
   NTag,
   NTooltip,
-  useMessage
+  useMessage,
+  NAutoComplete,
+  type AutoCompleteOption
 } from 'naive-ui'
 import {
   AddOutline,
@@ -55,9 +56,10 @@ const loading = ref(false)
 const editingName = ref(false)
 const newName = ref('')
 const newTagName = ref('')
-const newTagType = ref('general')
+const tagSearchOptions = ref<AutoCompleteOption[]>([])
 const regenerating = ref(false)
 const isEditingTags = ref(false)
+const addingTag = ref(false)
 
 
 const tagTypeOrder = ['copyright', 'character', 'artist', 'general', 'meta', 'rating', 'year']
@@ -71,13 +73,6 @@ const tagTypeMap: Record<string, string> = {
   rating: '分级',
   year: '年份',
 }
-
-const tagOptions = computed(() => {
-  return tagTypeOrder.map(type => ({
-    label: tagTypeMap[type],
-    value: type
-  }))
-})
 
 const formattedSize = computed(() => {
   if (!image.value) return ''
@@ -187,27 +182,85 @@ const handleRegenerate = async () => {
   }
 }
 
-const handleAddTag = async () => {
-  if (!image.value || !newTagName.value.trim()) {
+const handleTagSearch = async (value: string) => {
+  newTagName.value = value
+  if (!value || !value.trim()) {
+    tagSearchOptions.value = []
     return
   }
 
   try {
-    const existingTags = await tagsApi.listTags(newTagName.value.trim())
-    if (existingTags.some(t => t.name === newTagName.value.trim())) {
-      message.error('添加失败：标签已存在')
+    const tags = await tagsApi.listTags(value)
+    tagSearchOptions.value = tags.map(t => ({
+      label: t.name,
+      value: t.name
+    }))
+  } catch (e) {
+    tagSearchOptions.value = []
+  }
+}
+
+const handleAddTag = async (value?: string | any) => {
+  if (addingTag.value) return
+
+  let tagName = typeof value === 'string' ? value : newTagName.value
+  tagName = tagName?.trim()
+
+  if (!image.value || !tagName) {
+    return
+  }
+
+  addingTag.value = true
+  try {
+    const existingTags = await tagsApi.listTags(tagName)
+    const targetTag = existingTags.find(t => t.name.toLowerCase() === tagName.toLowerCase())
+
+    if (!targetTag) {
+      message.error('添加失败：标签不存在，只能添加数据库中已有标签')
+      return
+    }
+
+    if (image.value.tags.some(t => t.id === targetTag.id)) {
+      message.warning('该标签已添加')
+      newTagName.value = ''
       return
     }
 
     image.value = await galleryApi.addTag(image.value.id, {
-      name: newTagName.value.trim(),
-      type: newTagType.value
+      name: targetTag.name,
+      type: targetTag.type
     })
     message.success('标签添加成功')
     newTagName.value = ''
+    tagSearchOptions.value = []
   } catch (e) {
     message.error('标签添加失败')
+  } finally {
+    addingTag.value = false
   }
+}
+
+const handleSelect = (value: string | number) => {
+  newTagName.value = String(value)
+  tagSearchOptions.value = []
+}
+
+const handleEnter = (e: KeyboardEvent) => {
+  // If list is visible, autocomplete with the first option
+  if (tagSearchOptions.value.length > 0) {
+    const firstOption = tagSearchOptions.value[0]
+    if (firstOption) {
+      newTagName.value = String(firstOption.value)
+    }
+    tagSearchOptions.value = []
+    e.preventDefault()
+    return
+  }
+
+  // If list is hidden/empty, try to submit
+  const currentVal = newTagName.value.trim()
+  if (!currentVal) return
+  handleAddTag()
 }
 
 const handleRemoveTag = async (tag: TagDto) => {
@@ -474,18 +527,15 @@ const getTagColor = (type: string) => {
 
               <div v-if="isEditingTags" class="mb-2">
                 <n-input-group>
-                  <n-select
-                      v-model:value="newTagType"
-                      :options="tagOptions"
-                      :style="{ width: '30%' }"
-                      size="small"
-                  />
-                  <n-input
+                  <n-auto-complete
                       v-model:value="newTagName"
-                      placeholder="标签名称"
+                      :options="tagSearchOptions"
+                      placeholder="输入标签名称..."
                       size="small"
-                      autofocus
-                      @keyup.enter="handleAddTag"
+                      clearable
+                      @update:value="handleTagSearch"
+                      @select="handleSelect"
+                      @keydown.enter="handleEnter"
                   />
                   <n-button size="small" type="primary" secondary @click="handleAddTag">
                     <template #icon>
@@ -521,13 +571,9 @@ const getTagColor = (type: string) => {
               </div>
               <span v-else class="text-gray-500 text-sm italic py-1">暂无标签</span>
             </div>
-
           </div>
-
         </div>
       </div>
-
-
     </div>
   </n-modal>
 </template>

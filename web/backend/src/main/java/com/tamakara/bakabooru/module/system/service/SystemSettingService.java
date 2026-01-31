@@ -24,30 +24,7 @@ public class SystemSettingService {
 
     @PostConstruct
     public void init() {
-        initDefaultSettings();
         refreshCache();
-    }
-
-    private void initDefaultSettings() {
-        Map<String, String> defaults = new HashMap<>();
-        defaults.put("upload.max-file-size", "5242880");
-        defaults.put("upload.allowed-extensions", "jpg,png,webp,gif,jpeg");
-        defaults.put("upload.concurrency", "3");
-        defaults.put("upload.poll-interval", "1000");
-        defaults.put("file.thumbnail.quality", "80");
-        defaults.put("file.thumbnail.max-size", "800");
-        defaults.put("tag.threshold", "0.6");
-        defaults.put("auth.password", "");
-        defaults.put("auth.initialized", "false");
-        defaults.put("llm.url", "");
-        defaults.put("llm.model", "");
-        defaults.put("llm.api-key", "");
-
-        for (Map.Entry<String, String> entry : defaults.entrySet()) {
-            if (!systemSettingRepository.existsById(entry.getKey())) {
-                systemSettingRepository.save(new SystemSetting(entry.getKey(), entry.getValue()));
-            }
-        }
     }
 
     public void refreshCache() {
