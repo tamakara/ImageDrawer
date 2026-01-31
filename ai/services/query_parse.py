@@ -27,14 +27,14 @@ def query_parse(query: str, llm_url: str, llm_model: str, llm_api_key: str) -> s
 
     for word, tags in parsed_tags.positive.items():
         for tag in tags:
-            match_tag, similarity = matcher.match(tag, threshold=0.8)
+            match_tag, similarity = matcher.match(tag, threshold=0.9)
             if match_tag:
                 result_tags.append(match_tag)
                 break
 
     for word, tags in parsed_tags.negative.items():
         for tag in tags:
-            match_tag, similarity = matcher.match(tag, threshold=0.8)
+            match_tag, similarity = matcher.match(tag, threshold=0.9)
             if match_tag:
                 result_tags.append('-' + match_tag)
                 break
