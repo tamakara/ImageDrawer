@@ -167,13 +167,19 @@ const hasNextDetail = computed(() => currentDetailIndex.value !== -1 && currentD
 
 function handlePrevDetail() {
   if (hasPrevDetail.value) {
-    selectedDetailImageId.value = images.value[currentDetailIndex.value - 1].id
+    const prev = images.value[currentDetailIndex.value - 1]
+    if (prev) {
+      selectedDetailImageId.value = prev.id
+    }
   }
 }
 
 function handleNextDetail() {
   if (hasNextDetail.value) {
-    selectedDetailImageId.value = images.value[currentDetailIndex.value + 1].id
+    const next = images.value[currentDetailIndex.value + 1]
+    if (next) {
+      selectedDetailImageId.value = next.id
+    }
   }
 }
 
