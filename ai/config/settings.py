@@ -1,7 +1,6 @@
 from pathlib import Path
 from pydantic_settings import BaseSettings
 from typing import Optional
-
 from services.camie_tagger import CamieTagger
 from services.tag_matcher import TagMatcher
 
@@ -13,6 +12,7 @@ class Settings(BaseSettings):
     db_dir: Optional[Path] = None
     tagger: Optional[CamieTagger] = None
     matcher: Optional[TagMatcher] = None
+    danbooru_tags: Optional[set[str]] = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

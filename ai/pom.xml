@@ -21,6 +21,24 @@
                 <version>3.1.0</version>
                 <executions>
                     <execution>
+                        <id>python-pip-install</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>py</executable>
+                            <arguments>
+                                <argument>-3.12</argument>
+                                <argument>-m</argument>
+                                <argument>pip</argument>
+                                <argument>install</argument>
+                                <argument>-r</argument>
+                                <argument>requirements.txt</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <phase>prepare-package</phase>
                         <goals>
                             <goal>exec</goal>

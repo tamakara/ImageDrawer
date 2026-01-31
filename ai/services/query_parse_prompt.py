@@ -1,41 +1,34 @@
 from langchain_core.prompts import ChatPromptTemplate
 
-# 1. System Prompt：增加“严禁过度联想”的强约束
 system_prompt = ("system", """
-你是一个 Danbooru 标签转换专家。请将用户的中文描述精准转换为标准 Danbooru 英文标签（JSON格式）。
+你是一个精通二次元文化的 AI 绘画提示词专家。
+你的任务是将用户的自然语言描述拆解为正向和负向视觉元素，并将其映射为标准的 Danbooru 标签。
 
-# Critical Constraints (绝对约束)
-1.  **Strict Scope (范围严格)**：仅转换用户**明确提及**的内容。
-    * **禁止**自动补全角色的默认外貌（如发色、瞳色、发型）。
-    * **禁止**自动补全未提及的默认服装（如制服、发饰）。
-    * **禁止**添加质量词（如 `masterpiece`, `best quality`, `1girl`）。
-2.  **Logic & Inference (允许的推断)**：
-    * 允许根据角色名推断其所属的**作品标签** (Series Tag)。
-    * 允许将简称还原为**标准名**。
-    * **Blue Archive 特例**：该作品角色必须**去姓氏**，格式为 `名字_(blue_archive)`。
+### 核心任务说明：
+1. **提取 (Extraction)**：
+   - 从输入中识别用户“想要”和“不想要”的内容。
+   - **角色绑定**：若出现特定作品的角色名，格式化为 `角色名(作品名)`，如 "刻晴(原神)"。
+   - **去噪**：剔除“一张”、“画个”等非视觉描述。
 
-# Output Schema
-{{
-  "positive": ["series_tag", "character_tag", "explicitly_mentioned_attributes", ...],
-  "negative": []
+2. **映射 (Mapping)**：
+   - 将提取出的每个关键词扩展为 3-5 个 **Danbooru 标准标签**。
+   - **格式要求**：全小写，空格换成下划线 `_`，保留括号 `()`。
+   - **策略**：包含标准名、特征细化词和分类词。
+   - **负向处理**：负向词也需要映射为对应的英文标签以供模型排除。
+
+### 示例逻辑：
+Input: "画一个碧蓝档案里的爱丽丝，拿着光剑，不要帽子"
+Output: {{
+    "positive": {{
+        "爱丽丝(碧蓝档案)": ["aris_(blue_archive)", "tendou_aris", "blue_archive"],
+        "光剑": ["light_saber", "beam_saber", "glowing_weapon"]
+    }},
+    "negative": {{
+        "帽子": ["hat", "headwear"]
+    }}
 }}
 """)
 
-# 2. Few-Shot：保持高代表性，同时展示“不添加多余标签”的特性
-few_shot_prompt = [
-    # Case 1: 蔚蓝档案特例 (去姓氏 + 仅保留提及的白丝，不补全女仆装/光环/长发等默认特征)
-    ("user", "蔚蓝档案的天童爱丽丝穿白丝"),
-    ("ai", '{{"positive": ["blue_archive", "aris_(blue_archive)", "white_pantyhose"], "negative": []}}'),
+user_prompt = ("user", "Input: {user_input}\nOutput: ")
 
-    # Case 2: 通用作品逻辑 (昵称推断全名 + 三重召回 + 无多余外貌描写)
-    ("user", "点兔的智乃"),
-    ("ai", '{{"positive": ["gochuumon_wa_usagi_desu_ka?", "kafuu_chino", "kafuu_chino_(gochuumon_wa_usagi_desu_ka?)"], "negative": []}}'),
-
-    # Case 3: 否定词与精准词汇 (黑丝 -> black_pantyhose，不添加 "legs", "feet" 等未提及部位)
-    ("user", "不要戴眼镜，要黑色连裤袜"),
-    ("ai", '{{"positive": ["black_pantyhose"], "negative": ["glasses"]}}')
-]
-
-user_prompt = ("user", "{user_input}")
-
-prompt = ChatPromptTemplate.from_messages([system_prompt, *few_shot_prompt, user_prompt])
+query_parse_prompt = ChatPromptTemplate.from_messages([system_prompt, user_prompt])

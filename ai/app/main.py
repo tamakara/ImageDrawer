@@ -23,11 +23,11 @@ async def lifespan(app: FastAPI):
 
         model_dir = settings.model_dir
         index_dir = settings.index_dir
-        official_tags = settings.tagger.tag_to_category.keys()
+        danbooru_tags = settings.tagger.tag_to_category.keys()
 
         settings.matcher = TagMatcher(
             index_dir=index_dir,
-            valid_tags=official_tags,
+            valid_tags=danbooru_tags,
             cache_dir=model_dir
         )
     except Exception as e:
@@ -37,6 +37,7 @@ async def lifespan(app: FastAPI):
     yield
 
     print("正在关闭 AI 服务...")
+
 
 app = FastAPI(
     title="BaKaBooru AI Service",

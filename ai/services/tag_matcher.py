@@ -80,17 +80,14 @@ class TagMatcher:
         print(f"索引已保存至 '{self.index_dir}'，耗时: {time.time() - start_time:.2f}s")
         return vector_store
 
-    def match(self, query: str, threshold: float = 0.61) -> Optional[str]:
-        """匹配单个词"""
+    def match(self, query: str, threshold: float = 0.6) -> Optional[Tuple[str, float]]:
         clean_q = query.replace("_", " ").replace("(", "").replace(")", "").lower()
-        # L2 距离：越小越接近。归一化向量后，距离范围通常在 0 到 2 之间。
         search_res = self.vector_store.similarity_search_with_score(clean_q, k=1)
 
-        best_match = None
         if search_res:
             doc, score = search_res[0]
-            # 转换分数逻辑：距离 <= (1 - threshold)
-            if score <= (1.0 - threshold):
-                best_match = doc.metadata["original_tag"]
-
-        return best_match
+            # 计算余弦相似度
+            similarity = 1 - (score ** 2) / 2
+            if similarity >= threshold:
+                return doc.metadata["original_tag"], float(similarity)
+        return None

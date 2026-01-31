@@ -1,9 +1,11 @@
+from typing import Dict, List
+
 from pydantic import Field, BaseModel
 
 
 class ParsedTags(BaseModel):
-    positive: list[str] = Field(description="List of positive tags")
-    negative: list[str] = Field(description="List of negative tags")
+    positive: Dict[str, List[str]]
+    negative: Dict[str, List[str]]
 
 
 class QueryParseRequest(BaseModel):
