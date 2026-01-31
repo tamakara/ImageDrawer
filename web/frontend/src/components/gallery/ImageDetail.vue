@@ -60,16 +60,16 @@ const regenerating = ref(false)
 const isEditingTags = ref(false)
 
 
-const tagTypeOrder = ['copyright', 'character', 'artist', 'general', 'meta', 'rating']
+const tagTypeOrder = ['copyright', 'character', 'artist', 'general', 'meta', 'rating', 'year']
 
 const tagTypeMap: Record<string, string> = {
-  custom: '自定义',
   copyright: '版权',
   character: '角色',
   artist: '作者',
   general: '一般',
   meta: '元数据',
-  rating: '分级'
+  rating: '分级',
+  year: '年份',
 }
 
 const tagOptions = computed(() => {
@@ -263,6 +263,8 @@ const getTagColor = (type: string) => {
       return {color: 'rgba(255, 145, 0, 0.15)', textColor: '#ffab40'}
     case 'rating':
       return {color: 'rgba(158, 158, 158, 0.15)', textColor: '#bdbdbd'}
+    case 'year':
+      return {color: 'rgba(124, 77, 255, 0.15)', textColor: '#b388ff'}
     case 'general':
     default:
       return {color: 'rgba(59, 130, 246, 0.15)', textColor: '#93c5fd'}
@@ -276,285 +278,255 @@ const getTagColor = (type: string) => {
     <div class="flex flex-col w-screen h-screen bg-black text-white overflow-hidden">
 
       <!-- Content Area -->
-      <div class="flex-1 flex flex-col lg:flex-row w-full h-full lg:overflow-hidden overflow-y-auto custom-scrollbar relative">
+      <div
+          class="flex-1 flex flex-col lg:flex-row w-full h-full lg:overflow-hidden overflow-y-auto custom-scrollbar relative">
 
         <!-- 主图片区域 -->
         <div
             class="flex-none w-full h-[60vh] lg:h-full lg:flex-1 lg:w-auto flex items-center justify-center bg-black overflow-hidden group sticky top-0 lg:relative z-0">
-        <div v-if="loading" class="absolute inset-0 flex items-center justify-center z-20">
-          <div class="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-
-        <n-image
-            v-if="image"
-            :src="image.url"
-            :alt="image.title"
-            class="w-full h-full flex items-center justify-center"
-            object-fit="contain"
-            :img-props="{ class: 'max-h-full max-w-full object-contain' }"
-        />
-
-        <!-- 导航按钮 -->
-        <div v-if="hasPrev"
-             class="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/50 hover:bg-black/80 text-white cursor-pointer transition-all flex items-center justify-center aspect-square"
-             @click.stop="handlePrev">
-          <n-icon size="40" :component="ChevronBackOutline"/>
-        </div>
-
-        <div v-if="hasNext"
-             class="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/50 hover:bg-black/80 text-white cursor-pointer transition-all flex items-center justify-center aspect-square"
-             @click.stop="handleNext">
-          <n-icon size="40" :component="ChevronForwardOutline"/>
-        </div>
-      </div>
-
-      <!-- 信息面板 -->
-      <div
-          class="flex-none w-full lg:w-[400px] lg:h-full bg-gray-900 border-t lg:border-t-0 lg:border-l border-gray-800 flex flex-col relative shadow-2xl z-20 min-h-[40vh]">
-        <div v-if="image" class="flex-1 lg:overflow-y-auto p-6 pb-24 lg:pb-6 flex flex-col gap-6 custom-scrollbar">
-          <!-- 标题部分 -->
-          <div class="flex flex-col gap-2">
-            <div class="text-sm text-gray-400 uppercase font-bold tracking-wider">标题</div>
-            <div v-if="!editingName" @click="editingName = true"
-                 class="text-xl lg:text-2xl font-semibold cursor-pointer hover:text-primary-400 break-words transition-colors"
-                 title="点击编辑">
-              {{ image.title }}
-            </div>
-            <n-input v-else v-model:value="newName" @blur="saveName" @keyup.enter="saveName" autofocus
-                     placeholder="输入名称" size="large"/>
+          <div v-if="loading" class="absolute inset-0 flex items-center justify-center z-20">
+            <div class="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
 
-          <n-divider class="my-0 bg-gray-800"/>
+          <n-image
+              v-if="image"
+              :src="image.url"
+              :alt="image.title"
+              class="w-full h-full flex items-center justify-center"
+              object-fit="contain"
+              :img-props="{ class: 'max-h-full max-w-full object-contain' }"
+          />
 
-          <!-- 标签部分 -->
-          <div class="flex flex-col gap-3">
-            <div class="flex items-center justify-between">
-              <div class="text-sm text-gray-400 uppercase font-bold tracking-wider flex items-center gap-1">
-                <n-icon :component="PricetagOutline"/>
-                标签
-              </div>
-              <div class="flex gap-2">
-                <n-button
-                    size="tiny"
-                    secondary
-                    circle
-                    :type="isEditingTags ? 'warning' : 'tertiary'"
-                    @click="isEditingTags = !isEditingTags"
-                >
-                  <template #icon>
-                    <n-icon :component="PencilOutline"/>
-                  </template>
-                </n-button>
-                <n-button
-                    size="tiny"
-                    secondary
-                    circle
-                    type="info"
-                    :loading="regenerating"
-                    @click="handleRegenerate"
-                >
-                  <template #icon>
-                    <n-icon :component="RefreshOutline"/>
-                  </template>
-                </n-button>
-              </div>
-            </div>
-
-            <div v-if="isEditingTags" class="mb-2">
-              <n-input-group>
-                <n-select
-                    v-model:value="newTagType"
-                    :options="tagOptions"
-                    :style="{ width: '30%' }"
-                    size="small"
-                />
-                <n-input
-                    v-model:value="newTagName"
-                    placeholder="标签名称"
-                    size="small"
-                    autofocus
-                    @keyup.enter="handleAddTag"
-                />
-                <n-button size="small" type="primary" secondary @click="handleAddTag">
-                  <template #icon>
-                    <n-icon :component="AddOutline"/>
-                  </template>
-                </n-button>
-              </n-input-group>
-            </div>
-
-            <div v-if="image.tags?.length" class="flex flex-col gap-3">
-              <template v-for="type in tagTypeOrder" :key="type">
-                <div v-if="groupedTags[type]?.length" class="flex flex-col gap-1">
-                  <div class="text-xs text-gray-500 uppercase font-semibold tracking-wider ml-1">
-                    {{ tagTypeMap[type] || type }}
-                  </div>
-                  <div class="flex flex-wrap gap-2">
-                    <n-tag
-                        v-for="tag in groupedTags[type]"
-                        :key="tag.id"
-                        size="small"
-                        round
-                        :bordered="false"
-                        :color="getTagColor(type)"
-                        :closable="isEditingTags"
-                        @close="handleRemoveTag(tag)"
-                        class="hover:opacity-80 transition-opacity"
-                    >
-                      {{ tag.name }}
-                    </n-tag>
-                  </div>
-                </div>
-              </template>
-            </div>
-            <span v-else class="text-gray-500 text-sm italic py-1">暂无标签</span>
+          <!-- 导航按钮 -->
+          <div v-if="hasPrev"
+               class="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/50 hover:bg-black/80 text-white cursor-pointer transition-all flex items-center justify-center aspect-square"
+               @click.stop="handlePrev">
+            <n-icon size="40" :component="ChevronBackOutline"/>
           </div>
 
-          <n-divider class="my-0 bg-gray-800"/>
-
-          <!-- 详细信息 -->
-          <div class="flex flex-col gap-4">
-            <div class="text-sm text-gray-400 uppercase font-bold tracking-wider">详细信息</div>
-            <div class="grid grid-cols-2 gap-y-5 gap-x-4 text-sm lg:text-base">
-              <!-- Size -->
-              <div class="flex flex-col gap-1">
-                      <span class="text-gray-500 text-xs flex items-center gap-1">
-                         <n-icon :component="ResizeOutline"/> 尺寸
-                      </span>
-                <span class="text-gray-200 font-mono">{{ image.width }} × {{ image.height }}</span>
-              </div>
-              <!-- View Count -->
-              <div class="flex flex-col gap-1">
-                      <span class="text-gray-500 text-xs flex items-center gap-1">
-                         <n-icon :component="EyeOutline"/> 查看次数
-                      </span>
-                <span class="text-gray-200 font-mono">{{ image.viewCount || 0 }}</span>
-              </div>
-              <!-- File Size -->
-              <div class="flex flex-col gap-1">
-                      <span class="text-gray-500 text-xs flex items-center gap-1">
-                         <n-icon :component="HardwareChipOutline"/> 大小
-                      </span>
-                <span class="text-gray-200 font-mono">{{ formattedSize }}</span>
-              </div>
-              <!-- Format -->
-              <div class="flex flex-col gap-1">
-                      <span class="text-gray-500 text-xs flex items-center gap-1">
-                         <n-icon :component="ImageOutline"/> 格式
-                      </span>
-                <span class="text-gray-200 uppercase font-mono">{{ image.extension }}</span>
-              </div>
-              <!-- Date -->
-              <div class="flex flex-col gap-1">
-                      <span class="text-gray-500 text-xs flex items-center gap-1">
-                         <n-icon :component="TimeOutline"/> 创建时间
-                      </span>
-                <span class="text-gray-200 font-mono">{{ useDateFormat(image.createdAt, 'YYYY-MM-DD').value }}</span>
-              </div>
-            </div>
-
-            <!-- Full Filename & Hash -->
-            <div class="flex flex-col gap-3 mt-2">
-              <div class="flex flex-col gap-1">
-                     <span class="text-gray-500 text-xs flex items-center gap-1">
-                        <n-icon :component="DocumentTextOutline"/> 文件名
-                     </span>
-                <n-tooltip trigger="hover" placement="top">
-                  <template #trigger>
-                       <span
-                           class="text-gray-300 text-xs lg:text-sm truncate font-mono bg-black/30 p-2 rounded border border-gray-700/50 select-all block">{{
-                           image.fileName
-                         }}</span>
-                  </template>
-                  {{ image.fileName }}
-                </n-tooltip>
-              </div>
-
-              <div class="flex flex-col gap-1">
-                     <span class="text-gray-500 text-xs flex items-center gap-1">
-                        <span class="font-bold text-[10px]">#</span> 哈希
-                     </span>
-                <n-tooltip trigger="hover" placement="top">
-                  <template #trigger>
-                       <span
-                           class="text-gray-300 text-xs lg:text-sm truncate font-mono bg-black/30 p-2 rounded border border-gray-700/50 select-all block">{{
-                           image.hash
-                         }}</span>
-                  </template>
-                  {{ image.hash }}
-                </n-tooltip>
-              </div>
-            </div>
+          <div v-if="hasNext"
+               class="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/50 hover:bg-black/80 text-white cursor-pointer transition-all flex items-center justify-center aspect-square"
+               @click.stop="handleNext">
+            <n-icon size="40" :component="ChevronForwardOutline"/>
           </div>
-
         </div>
 
-          <!-- Desktop Footer (Hidden on Mobile) -->
-          <div v-if="image"
-               class="hidden lg:block p-6 border-t border-gray-800 bg-gray-900 mt-auto shadow-2xl lg:shadow-none">
-            <div class="grid grid-cols-3 gap-3">
-              <n-button block secondary type="info" @click="handleDownload">
-                <template #icon>
-                  <n-icon :component="DownloadOutline"/>
-                </template>
-                <span class="hidden sm:inline">下载</span>
-              </n-button>
+        <!-- 信息面板 -->
+        <div
+            class="flex-none w-full lg:w-[400px] lg:h-full bg-gray-900 border-t lg:border-t-0 lg:border-l border-gray-800 flex flex-col relative shadow-2xl z-20 min-h-[40vh]">
 
-              <n-popconfirm @positive-click="handleDelete" placement="top">
+          <!-- 顶部操作栏 -->
+          <div v-if="image" class="p-4 border-b border-gray-800 bg-gray-900 shrink-0">
+            <div class="grid grid-cols-3 gap-2">
+              <n-popconfirm @positive-click="handleDelete" placement="bottom">
                 <template #trigger>
-                  <n-button block secondary type="error">
+                  <n-button secondary type="error" block>
                     <template #icon>
                       <n-icon :component="TrashOutline"/>
                     </template>
-                    <span class="hidden sm:inline">删除</span>
+                    删除
                   </n-button>
                 </template>
                 确定要删除这张图片吗？
               </n-popconfirm>
 
-              <n-button block secondary @click="handleClose">
+              <n-button secondary type="info" block @click="handleDownload">
+                <template #icon>
+                  <n-icon :component="DownloadOutline"/>
+                </template>
+                下载
+              </n-button>
+
+              <n-button secondary block @click="handleClose">
                 <template #icon>
                   <n-icon :component="CloseOutline"/>
                 </template>
-                <span class="hidden sm:inline">关闭</span>
+                关闭
               </n-button>
             </div>
+          </div>
+
+          <div v-if="image" class="flex-1 lg:overflow-y-auto p-6 flex flex-col custom-scrollbar">
+            <!-- 标题部分 -->
+            <div class="flex flex-col gap-2">
+              <div class="text-sm text-gray-400 uppercase font-bold tracking-wider">标题</div>
+              <div v-if="!editingName" @click="editingName = true"
+                   class="text-xl lg:text-2xl font-semibold cursor-pointer hover:text-primary-400 break-words transition-colors"
+                   title="点击编辑">
+                {{ image.title }}
+              </div>
+              <n-input v-else v-model:value="newName" @blur="saveName" @keyup.enter="saveName" autofocus
+                       placeholder="输入名称" size="large"/>
+            </div>
+
+            <n-divider class="my-0 bg-gray-800"/>
+
+            <!-- 详细信息 -->
+            <div class="flex flex-col gap-4">
+              <div class="text-sm text-gray-400 uppercase font-bold tracking-wider">详细信息</div>
+              <div class="grid grid-cols-2 gap-y-5 gap-x-4 text-sm lg:text-base">
+                <!-- Size -->
+                <div class="flex flex-col gap-1">
+                      <span class="text-gray-500 text-xs flex items-center gap-1">
+                         <n-icon :component="ResizeOutline"/> 尺寸
+                      </span>
+                  <span class="text-gray-200 font-mono">{{ image.width }} × {{ image.height }}</span>
+                </div>
+                <!-- View Count -->
+                <div class="flex flex-col gap-1">
+                      <span class="text-gray-500 text-xs flex items-center gap-1">
+                         <n-icon :component="EyeOutline"/> 查看次数
+                      </span>
+                  <span class="text-gray-200 font-mono">{{ image.viewCount || 0 }}</span>
+                </div>
+                <!-- File Size -->
+                <div class="flex flex-col gap-1">
+                      <span class="text-gray-500 text-xs flex items-center gap-1">
+                         <n-icon :component="HardwareChipOutline"/> 大小
+                      </span>
+                  <span class="text-gray-200 font-mono">{{ formattedSize }}</span>
+                </div>
+                <!-- Format -->
+                <div class="flex flex-col gap-1">
+                      <span class="text-gray-500 text-xs flex items-center gap-1">
+                         <n-icon :component="ImageOutline"/> 格式
+                      </span>
+                  <span class="text-gray-200 uppercase font-mono">{{ image.extension }}</span>
+                </div>
+                <!-- Date -->
+                <div class="flex flex-col gap-1">
+                      <span class="text-gray-500 text-xs flex items-center gap-1">
+                         <n-icon :component="TimeOutline"/> 创建时间
+                      </span>
+                  <span class="text-gray-200 font-mono">{{ useDateFormat(image.createdAt, 'YYYY-MM-DD').value }}</span>
+                </div>
+              </div>
+
+              <!-- Full Filename & Hash -->
+              <div class="flex flex-col gap-3 mt-2">
+                <div class="flex flex-col gap-1">
+                     <span class="text-gray-500 text-xs flex items-center gap-1">
+                        <n-icon :component="DocumentTextOutline"/> 文件名
+                     </span>
+                  <n-tooltip trigger="hover" placement="top">
+                    <template #trigger>
+                       <span
+                           class="text-gray-300 text-xs lg:text-sm truncate font-mono bg-black/30 p-2 rounded border border-gray-700/50 select-all block">{{
+                           image.fileName
+                         }}</span>
+                    </template>
+                    {{ image.fileName }}
+                  </n-tooltip>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                     <span class="text-gray-500 text-xs flex items-center gap-1">
+                        <span class="font-bold text-[10px]">#</span> 哈希
+                     </span>
+                  <n-tooltip trigger="hover" placement="top">
+                    <template #trigger>
+                       <span
+                           class="text-gray-300 text-xs lg:text-sm truncate font-mono bg-black/30 p-2 rounded border border-gray-700/50 select-all block">{{
+                           image.hash
+                         }}</span>
+                    </template>
+                    {{ image.hash }}
+                  </n-tooltip>
+                </div>
+              </div>
+            </div>
+
+            <n-divider class="my-0 bg-gray-800"/>
+
+            <!-- 标签部分 -->
+            <div class="flex flex-col gap-3">
+              <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-400 uppercase font-bold tracking-wider flex items-center gap-1">
+                  <n-icon :component="PricetagOutline"/>
+                  标签
+                </div>
+                <div class="flex gap-2">
+                  <n-button
+                      size="tiny"
+                      secondary
+                      circle
+                      :type="isEditingTags ? 'warning' : 'tertiary'"
+                      @click="isEditingTags = !isEditingTags"
+                  >
+                    <template #icon>
+                      <n-icon :component="PencilOutline"/>
+                    </template>
+                  </n-button>
+                  <n-button
+                      size="tiny"
+                      secondary
+                      circle
+                      type="info"
+                      :loading="regenerating"
+                      @click="handleRegenerate"
+                  >
+                    <template #icon>
+                      <n-icon :component="RefreshOutline"/>
+                    </template>
+                  </n-button>
+                </div>
+              </div>
+
+              <div v-if="isEditingTags" class="mb-2">
+                <n-input-group>
+                  <n-select
+                      v-model:value="newTagType"
+                      :options="tagOptions"
+                      :style="{ width: '30%' }"
+                      size="small"
+                  />
+                  <n-input
+                      v-model:value="newTagName"
+                      placeholder="标签名称"
+                      size="small"
+                      autofocus
+                      @keyup.enter="handleAddTag"
+                  />
+                  <n-button size="small" type="primary" secondary @click="handleAddTag">
+                    <template #icon>
+                      <n-icon :component="AddOutline"/>
+                    </template>
+                  </n-button>
+                </n-input-group>
+              </div>
+
+              <div v-if="image.tags?.length" class="flex flex-col gap-3">
+                <template v-for="type in tagTypeOrder" :key="type">
+                  <div v-if="groupedTags[type]?.length" class="flex flex-col gap-1">
+                    <div class="text-xs text-gray-500 uppercase font-semibold tracking-wider ml-1">
+                      {{ tagTypeMap[type] || type }}
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <n-tag
+                          v-for="tag in groupedTags[type]"
+                          :key="tag.id"
+                          size="small"
+                          round
+                          :bordered="false"
+                          :color="getTagColor(type)"
+                          :closable="isEditingTags"
+                          @close="handleRemoveTag(tag)"
+                          class="hover:opacity-80 transition-opacity"
+                      >
+                        {{ tag.name }}
+                      </n-tag>
+                    </div>
+                  </div>
+                </template>
+              </div>
+              <span v-else class="text-gray-500 text-sm italic py-1">暂无标签</span>
+            </div>
+
           </div>
 
         </div>
       </div>
 
-      <!-- Mobile Footer (Fixed at the bottom of screen) -->
-      <div v-if="image"
-           class="lg:hidden shrink-0 z-50 p-4 border-t border-gray-800 bg-gray-900 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
-        <div class="grid grid-cols-3 gap-3">
-          <n-button block secondary type="info" @click="handleDownload">
-            <template #icon>
-              <n-icon :component="DownloadOutline"/>
-            </template>
-            <span class="hidden sm:inline">下载</span>
-          </n-button>
-
-          <n-popconfirm @positive-click="handleDelete" placement="top">
-            <template #trigger>
-              <n-button block secondary type="error">
-                <template #icon>
-                  <n-icon :component="TrashOutline"/>
-                </template>
-                <span class="hidden sm:inline">删除</span>
-              </n-button>
-            </template>
-            确定要删除这张图片吗？
-          </n-popconfirm>
-
-          <n-button block secondary @click="handleClose">
-            <template #icon>
-              <n-icon :component="CloseOutline"/>
-            </template>
-            <span class="hidden sm:inline">关闭</span>
-          </n-button>
-        </div>
-      </div>
 
     </div>
   </n-modal>

@@ -19,6 +19,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -83,22 +84,18 @@ public class ImageService {
         // 生成标签
         Map<String, List<String>> newTagsMap = tagService.tagImage("image/" + image.getHash());
 
-        // 保留自定义标签
-        Set<Tag> tagsToKeep = image.getTags().stream()
-                .filter(tag -> "custom".equals(tag.getType()))
-                .collect(Collectors.toSet());
-
         // 处理新标签
+        Set<Tag> newTags = new HashSet<>();
         for (Map.Entry<String, List<String>> entry : newTagsMap.entrySet()) {
             String type = entry.getKey();
             List<String> names = entry.getValue();
             for (String name : names) {
                 Tag tag = tagService.findOrCreateTag(name, type);
-                tagsToKeep.add(tag);
+                newTags.add(tag);
             }
         }
 
-        image.setTags(tagsToKeep);
+        image.setTags(newTags);
         image.setUpdatedAt(LocalDateTime.now());
         return imageMapper.toDto(imageRepository.save(image), signatureService);
     }
@@ -108,7 +105,7 @@ public class ImageService {
         Image image = imageRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("找不到图片"));
 
-        Tag tag = tagService.findOrCreateTag(tagDto.getName(), tagDto.getType() != null ? tagDto.getType() : "custom");
+        Tag tag = tagService.findOrCreateTag(tagDto.getName(),  tagDto.getType());
         image.getTags().add(tag);
         image.setUpdatedAt(LocalDateTime.now());
 

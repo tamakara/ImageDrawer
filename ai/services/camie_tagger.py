@@ -174,7 +174,7 @@ class CamieTagger:
         indices = np.where(probs >= threshold)[0]
 
         # 如果没有任何标签超过阈值，保底返回概率最高的 5 个
-        if len(indices) == 0:
+        if len(indices) < 5:
             indices = np.argsort(probs)[-5:][::-1]
 
         for idx in indices:
