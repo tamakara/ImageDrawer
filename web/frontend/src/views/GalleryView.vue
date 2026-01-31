@@ -157,6 +157,26 @@ const totalCount = computed(() => data.value?.totalElements || 0)
 const showDetail = ref(false)
 const selectedDetailImageId = ref<number | null>(null)
 
+const currentDetailIndex = computed(() => {
+  if (!selectedDetailImageId.value || images.value.length === 0) return -1
+  return images.value.findIndex((img: any) => img.id === selectedDetailImageId.value)
+})
+
+const hasPrevDetail = computed(() => currentDetailIndex.value > 0)
+const hasNextDetail = computed(() => currentDetailIndex.value !== -1 && currentDetailIndex.value < images.value.length - 1)
+
+function handlePrevDetail() {
+  if (hasPrevDetail.value) {
+    selectedDetailImageId.value = images.value[currentDetailIndex.value - 1].id
+  }
+}
+
+function handleNextDetail() {
+  if (hasNextDetail.value) {
+    selectedDetailImageId.value = images.value[currentDetailIndex.value + 1].id
+  }
+}
+
 function openDetail(image: any) {
   selectedDetailImageId.value = image.id
   showDetail.value = true
@@ -667,6 +687,10 @@ async function handleBatchDownload() {
     <ImageDetail
         v-model:show="showDetail"
         :image-id="selectedDetailImageId"
+        :has-prev="hasPrevDetail"
+        :has-next="hasNextDetail"
+        @prev="handlePrevDetail"
+        @next="handleNextDetail"
         @refresh="refetch"
     />
 
