@@ -445,83 +445,71 @@ async function handleBatchDownload() {
               />
             </n-form-item>
 
-            <!-- 尺寸和大小过滤器 -->
-            <div class="space-y-4 my-2">
-              <div class="border rounded-md p-3 border-gray-100 dark:border-gray-800">
-                <div class="mb-2">
-                  <label class="text-xs font-medium text-gray-500">宽度范围</label>
-                </div>
-                <div class="flex gap-2">
-                  <n-input-number
-                      v-model:value="formState.widthMin"
-                      placeholder="MIN"
-                      :min="0"
-                      class="flex-1"
-                      size="tiny"
-                      :show-button="false"
-                  />
-                  <span class="text-gray-400 self-center">-</span>
-                  <n-input-number
-                      v-model:value="formState.widthMax"
-                      placeholder="MAX"
-                      :min="0"
-                      class="flex-1"
-                      size="tiny"
-                      :show-button="false"
-                  />
-                </div>
+            <n-form-item label="宽度范围">
+              <div class="flex gap-2 w-full">
+                <n-input-number
+                    v-model:value="formState.widthMin"
+                    placeholder="MIN"
+                    :min="0"
+                    class="flex-1"
+                    size="tiny"
+                    :show-button="false"
+                />
+                <span class="text-gray-400 self-center">-</span>
+                <n-input-number
+                    v-model:value="formState.widthMax"
+                    placeholder="MAX"
+                    :min="0"
+                    class="flex-1"
+                    size="tiny"
+                    :show-button="false"
+                />
               </div>
+            </n-form-item>
 
-              <div class="border rounded-md p-3 border-gray-100 dark:border-gray-800">
-                <div class="mb-2">
-                  <label class="text-xs font-medium text-gray-500">高度范围</label>
-                </div>
-                <div class="flex gap-2">
-                  <n-input-number
-                      v-model:value="formState.heightMin"
-                      placeholder="MIN"
-                      :min="0"
-                      class="flex-1"
-                      size="tiny"
-                      :show-button="false"
-                  />
-                  <span class="text-gray-400 self-center">-</span>
-                  <n-input-number
-                      v-model:value="formState.heightMax"
-                      placeholder="MAX"
-                      :min="0"
-                      class="flex-1"
-                      size="tiny"
-                      :show-button="false"
-                  />
-                </div>
+            <n-form-item label="高度范围">
+              <div class="flex gap-2 w-full">
+                <n-input-number
+                    v-model:value="formState.heightMin"
+                    placeholder="MIN"
+                    :min="0"
+                    class="flex-1"
+                    size="tiny"
+                    :show-button="false"
+                />
+                <span class="text-gray-400 self-center">-</span>
+                <n-input-number
+                    v-model:value="formState.heightMax"
+                    placeholder="MAX"
+                    :min="0"
+                    class="flex-1"
+                    size="tiny"
+                    :show-button="false"
+                />
               </div>
+            </n-form-item>
 
-              <div class="border rounded-md p-3 border-gray-100 dark:border-gray-800">
-                <div class="mb-2">
-                  <label class="text-xs font-medium text-gray-500">文件大小 (MB)</label>
-                </div>
-                <div class="flex gap-2">
-                  <n-input-number
-                      v-model:value="formState.sizeMin"
-                      placeholder="MIN"
-                      :min="0"
-                      class="flex-1"
-                      size="tiny"
-                      :show-button="false"
-                  />
-                  <span class="text-gray-400 self-center">-</span>
-                  <n-input-number
-                      v-model:value="formState.sizeMax"
-                      placeholder="MAX"
-                      :min="0"
-                      class="flex-1"
-                      size="tiny"
-                      :show-button="false"
-                  />
-                </div>
+            <n-form-item label="文件大小 (MB)">
+              <div class="flex gap-2 w-full">
+                <n-input-number
+                    v-model:value="formState.sizeMin"
+                    placeholder="MIN"
+                    :min="0"
+                    class="flex-1"
+                    size="tiny"
+                    :show-button="false"
+                />
+                <span class="text-gray-400 self-center">-</span>
+                <n-input-number
+                    v-model:value="formState.sizeMax"
+                    placeholder="MAX"
+                    :min="0"
+                    class="flex-1"
+                    size="tiny"
+                    :show-button="false"
+                />
               </div>
-            </div>
+            </n-form-item>
 
             <n-form-item label="排序依据">
               <n-select v-model:value="formState.sortBy" :options="sortOptions"/>
